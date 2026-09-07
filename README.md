@@ -37,3 +37,18 @@ cd Minimal-IOT-Dashboard
 # Start multi-container stack via Docker Compose
 docker-compose up --build
 ```
+## Backend
+
+The backend of the Minimal IoT Dashboard is built using **Node.js** and **Express.js**.
+
+It is responsible for receiving sensor telemetry, validating the incoming data, providing REST APIs for telemetry retrieval, and broadcasting new telemetry readings in real time using **Socket.IO**.
+
+### Backend Setup
+
+Navigate to the backend directory:
+
+```bash
+cd backend
+npm install
+node server.js
+```
