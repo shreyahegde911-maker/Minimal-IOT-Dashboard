@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket Test</title>
+</head>
+
+<body>
+
+    <h1>IoT WebSocket Test</h1>
+
+    <p id="status">Connecting...</p>
+
+    <pre id="output"></pre>
+
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+
+    <script>
+
+        const socket = io("http://localhost:3000");
+
+        const status = document.getElementById("status");
+        const output = document.getElementById("output");
+
+        socket.on("connect", () => {
+
+            status.textContent = "Connected to backend";
+
+            console.log("Connected:", socket.id);
+
+        });
+
+
+        socket.on("telemetry", (data) => {
+
+            console.log("Telemetry received:", data);
+
+            output.textContent =
+                JSON.stringify(data, null, 2);
+
+        });
+
+
+        socket.on("disconnect", () => {
+
+            status.textContent = "Disconnected from backend";
+
+        });
+
+    </script>
+
+</body>
+</html>
