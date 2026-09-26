@@ -88,6 +88,7 @@ Testing covers:
 | **TC-UI-01** | Dynamic Live Chart Updating | Connect UI to active WebSocket server | Chart updates dynamically without page refresh | Chart renders new data point immediately |
 | **TC-UI-02** | Historical CSV Data Export | Click "Export CSV" button in Historical Log Viewer | Browser triggers download of `.csv` file | CSV contains accurate timestamps and values |
 | **TC-UI-03** | WebSocket Auto-Reconnect | Stop backend server for 5 seconds, then restart | UI displays "Reconnecting...", then restores connection | Reconnect successful without browser refresh |
+| **TC-UI-04** | Real-Time Device Status Cards | Connect UI to active WebSocket server and receive telemetry | Device cards update temperature, humidity, and online status in real time | Displayed values match received telemetry |
 
 ### 3.4 Analytics & DevOps Tests (Member 4)
 | Test Case ID | Test Title | Test Procedure | Expected Result | Pass/Fail Criteria |
