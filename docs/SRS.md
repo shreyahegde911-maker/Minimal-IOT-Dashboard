@@ -120,7 +120,9 @@ The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
 | **IOT-FR-020** | REST Telemetry APIs | Member 2 | `backend/api` | `TC-API-01` |
 | **IOT-FR-021** | WebSocket Telemetry Broadcast | Member 2 | `backend/websocket` | `TC-WS-01` |
 | **IOT-FR-030** | Interactive Live Charts | Member 1 | `frontend/charts` | `TC-UI-01` |
-| **IOT-FR-032** | Historical Log Export (CSV/JSON)| Member 1 | `frontend/export` | `TC-UI-02` |
+| **IOT-FR-031** | Real-Time Device Status Cards | Member 1 | `frontend/device-cards` | `TC-UI-04` |
+| **IOT-FR-032** | Historical Log Export (CSV/JSON) | Member 1 | `frontend/export` | `TC-UI-02` |
+| **IOT-FR-033** | WebSocket Auto-Reconnect | Member 1 | `frontend/websocket` | `TC-UI-03` |
 | **IOT-FR-040** | Z-Score Anomaly Detector | Member 4 | `analytics/zscore` | `TC-ANOM-01` |
 | **IOT-FR-041** | Isolation Forest ML Model | Member 4 | `analytics/ml` | `TC-ANOM-02` |
 | **IOT-FR-042** | Notification Dispatcher | Member 4 | `analytics/alerting` | `TC-ALERT-01` |
