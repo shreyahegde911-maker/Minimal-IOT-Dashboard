@@ -128,3 +128,17 @@ The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
 | **IOT-FR-042** | Notification Dispatcher | Member 4 | `analytics/alerting` | `TC-ALERT-01` |
 | **IOT-NFR-001** | Sub-200ms Latency | Member 1 & 2 | `backend` + `frontend` | `TC-PERF-01` |
 | **IOT-NFR-020** | TLS & Token Security | Member 2 & 4 | `devops/nginx` | `TC-SEC-01` |
+
+---
+
+## 7. UML Use-Case Diagram
+
+### 7.1: User and Administrator Use-Case Diagram
+<img width="1502" height="747" alt="UML_01" src="https://github.com/user-attachments/assets/755e18ec-5c38-475d-9c05-4f570dc32429" />
+
+### 7.2: Telemetry Ingestion and Processing Use-Case Diagram
+<img width="1260" height="732" alt="UML_02" src="https://github.com/user-attachments/assets/d2017b88-a797-49f0-a68d-6f494f82ff51" />
+
+---
+
+
