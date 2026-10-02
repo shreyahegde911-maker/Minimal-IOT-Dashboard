@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Minimal IoT Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="dashboard-header">
+        <div>
+            <h1>Minimal IoT Dashboard</h1>
+            <p>Temperature & Humidity Monitoring</p>
+        </div>
+
+        <div id="connection-status" class="status disconnected">
+            ● Disconnected
+        </div>
+    </header>
+
+
+    <main class="dashboard-container">
+
+        <!-- Device Status -->
+        <section class="device-section">
+
+            <h2>Device Status</h2>
+
+            <div class="device-card">
+
+                <div class="device-card-header">
+                    <h3>Device 01</h3>
+
+                    <span id="device-status" class="online-status">
+                        Offline
+                    </span>
+                </div>
+
+                <div class="telemetry-values">
+
+                    <div class="telemetry-item">
+                        <span>Temperature</span>
+                        <strong id="temperature-value">-- °C</strong>
+                    </div>
+
+                    <div class="telemetry-item">
+                        <span>Humidity</span>
+                        <strong id="humidity-value">-- %</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Live Charts -->
+        <section class="charts-section">
+
+            <h2>Live Telemetry</h2>
+
+            <div class="chart-card">
+                <h3>Temperature</h3>
+                <canvas id="temperature-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h3>Humidity</h3>
+                <canvas id="humidity-chart"></canvas>
+            </div>
+
+        </section>
+
+
+        <!-- Historical Logs -->
+        <section class="history-section">
+
+            <h2>Historical Logs</h2>
+
+            <div class="export-buttons">
+                <button id="export-csv">Export CSV</button>
+                <button id="export-json">Export JSON</button>
+            </div>
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Device</th>
+                            <th>Temperature</th>
+                            <th>Humidity</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="telemetry-table-body">
+                        <!-- Telemetry rows will be added here -->
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Socket.IO Client -->
+<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+
+<!-- Our Dashboard JavaScript -->
+<script src="app.js"></script>
+
+</body>
+</html>
