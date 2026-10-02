@@ -18,7 +18,7 @@ The project includes formal Software Engineering (SE) documentation tailored spe
 
 ## 👥 Team Roles & Modules
 
-| Role | Lead | Focus Area | Core Deliverables |
+| Name | Lead | Focus Area | Core Deliverables |
 | :--- | :--- | :--- | :--- |
 | **Shreya** | Frontend Lead | Client Architecture & Live UI | Live Charts (Chart.js/ECharts), Log Viewer (CSV export), Device Cards, WebSocket Client |
 | **Harish** | Backend Lead | API & Ingestion Pipeline | Ingestion REST APIs, WebSocket/SSE Server, Dynamic Rule Engine, Auth & Rate Limiting |
