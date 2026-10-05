@@ -43,3 +43,8 @@ SELECT
     MAX(temperature) AS max_temp
 FROM telemetry_logs
 GROUP BY day_bucket, device_id;
+
+SELECT add_retention_policy(
+    'telemetry_logs',
+    INTERVAL '30 days'
+);
