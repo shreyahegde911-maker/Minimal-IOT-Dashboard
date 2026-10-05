@@ -18,6 +18,19 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    
+  timescaledb:
+    image: timescale/timescaledb:latest-pg15
+    container_name: miniot-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=miniot
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    restart: always
 
   # Analytics, Anomaly Engine & Alert Worker (Member 4)
   analytics-alerting:
@@ -39,3 +52,5 @@ services:
 networks:
   default:
     name: miniot-network
+volumes:
+  timescale_data:
