@@ -1,4 +1,5 @@
 import argparse
+from db_writer import insert_reading
 import json
 import math
 import random
@@ -88,6 +89,7 @@ def main():
                 )
 
                 print(json.dumps(reading), flush=True)
+                insert_reading(reading)
 
             time.sleep(args.interval)
 
