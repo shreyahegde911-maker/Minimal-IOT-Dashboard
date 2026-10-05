@@ -1,24 +1,7 @@
 version: '3.8'
 
 services:
-  # Backend API & WebSocket Stream (Member 2)
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: miniot-backend
-    ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - NODE_ENV=production
-    restart: always
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    
+  # TimescaleDB Time-Series Storage (Member 3)
   timescaledb:
     image: timescale/timescaledb:latest-pg15
     container_name: miniot-timescaledb
@@ -30,7 +13,39 @@ services:
       - POSTGRES_DB=miniot
     volumes:
       - timescale_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d miniot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Backend API & WebSocket Stream (Member 2)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: miniot-backend
+    ports:
+      - "3000:3000"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=miniot
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Multi-Sensor Telemetry Simulator (Member 3)
   simulator:
@@ -66,5 +81,6 @@ services:
 networks:
   default:
     name: miniot-network
+
 volumes:
   timescale_data:
