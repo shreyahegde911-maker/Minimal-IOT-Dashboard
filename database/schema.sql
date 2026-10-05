@@ -21,3 +21,25 @@ SELECT
     MAX(temperature) AS max_temp
 FROM telemetry_logs
 GROUP BY hour_bucket, device_id;
+
+CREATE MATERIALIZED VIEW telemetry_minute_avg AS
+SELECT
+    time_bucket('1 minute', time) AS minute_bucket,
+    device_id,
+    AVG(temperature) AS avg_temp,
+    AVG(humidity) AS avg_humidity,
+    MIN(temperature) AS min_temp,
+    MAX(temperature) AS max_temp
+FROM telemetry_logs
+GROUP BY minute_bucket, device_id;
+
+CREATE MATERIALIZED VIEW telemetry_daily_avg AS
+SELECT
+    time_bucket('1 day', time) AS day_bucket,
+    device_id,
+    AVG(temperature) AS avg_temp,
+    AVG(humidity) AS avg_humidity,
+    MIN(temperature) AS min_temp,
+    MAX(temperature) AS max_temp
+FROM telemetry_logs
+GROUP BY day_bucket, device_id;
