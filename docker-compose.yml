@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Backend API & WebSocket Stream (Member 2)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: miniot-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Analytics, Anomaly Engine & Alert Worker (Member 4)
+  analytics-alerting:
+    build:
+      context: .
+      dockerfile: analytics_alerting/Dockerfile
+    container_name: miniot-analytics
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BACKEND_URL=http://backend:3000
+      - Z_SCORE_THRESHOLD=3.0
+      - ROLLING_WINDOW_SIZE=60
+      - TEMP_HIGH_THRESHOLD=35.0
+      - ALERT_COOLDOWN_SECONDS=60
+    restart: always
+
+networks:
+  default:
+    name: miniot-network

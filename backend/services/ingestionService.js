@@ -26,6 +26,13 @@ function validateTelemetry(sensorId, temperature, humidity) {
         };
     }
 
+    if (temperature < -40 || temperature > 85) {
+    return {
+        valid: false,
+        message: "temperature must be between -40 and 85"
+        };
+    }
+
     // Validate humidity
     if (typeof humidity !== "number" || Number.isNaN(humidity)) {
         return {

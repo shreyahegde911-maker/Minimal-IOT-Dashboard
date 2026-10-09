@@ -30,6 +30,10 @@ app.get("/", (req, res) => {
 app.use("/api/telemetry", telemetryRoutes);
 
 // Start server
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    server.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = { app, server };

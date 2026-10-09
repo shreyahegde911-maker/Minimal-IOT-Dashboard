@@ -18,12 +18,12 @@ The project includes formal Software Engineering (SE) documentation tailored spe
 
 ## 👥 Team Roles & Modules
 
-| Role | Lead | Focus Area | Core Deliverables |
+| Name | Lead | Focus Area | Core Deliverables |
 | :--- | :--- | :--- | :--- |
-| **Member 1** | Frontend Lead | Client Architecture & Live UI | Live Charts (Chart.js/ECharts), Log Viewer (CSV export), Device Cards, WebSocket Client |
-| **Member 2** | Backend Lead | API & Ingestion Pipeline | Ingestion REST APIs, WebSocket/SSE Server, Dynamic Rule Engine, Auth & Rate Limiting |
-| **Member 3** | Database Lead | Time-Series Data & Simulator | Hypertable Schemas, Continuous Rollups, Retention Policies, Telemetry Simulator |
-| **Member 4** | DevOps Lead | ML Intelligence & DevOps | Anomaly Engine (Z-Score & Isolation Forest), Notification Worker, Docker Compose, CI/CD |
+| **Shreya** | Frontend Lead | Client Architecture & Live UI | Live Charts (Chart.js/ECharts), Log Viewer (CSV export), Device Cards, WebSocket Client |
+| **Harish** | Backend Lead | API & Ingestion Pipeline | Ingestion REST APIs, WebSocket/SSE Server, Dynamic Rule Engine, Auth & Rate Limiting |
+| **Poojitha** | Database Lead | Time-Series Data & Simulator | Hypertable Schemas, Continuous Rollups, Retention Policies, Telemetry Simulator |
+| **Dhruvanth** | DevOps Lead | ML Intelligence & DevOps | Anomaly Engine (Z-Score & Isolation Forest), Notification Worker, Docker Compose, CI/CD |
 
 ---
 
