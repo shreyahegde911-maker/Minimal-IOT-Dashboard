@@ -1,3 +1,12 @@
+
+// =========================
+// Store Historical Telemetry
+// =========================
+
+const telemetryHistory = [];
+const MAX_HISTORY = 1000;
+
+
 // =========================
 // Temperature Chart
 // =========================
@@ -8,17 +17,10 @@ const temperatureCtx = document
 
 const temperatureChart = new Chart(temperatureCtx, {
     type: "line",
-
     data: {
         labels: [],
-        datasets: [{
-            label: "Temperature (°C)",
-            data: [],
-            borderWidth: 2,
-            tension: 0.3
-        }]
+        datasets: []
     },
-
     options: {
         responsive: true,
         scales: {
@@ -40,17 +42,11 @@ const humidityCtx = document
 
 const humidityChart = new Chart(humidityCtx, {
     type: "line",
-
     data: {
         labels: [],
-        datasets: [{
-            label: "Humidity (%)",
-            data: [],
-            borderWidth: 2,
-            tension: 0.3
-        }]
+        datasets: []
     },
-
+        
     options: {
         responsive: true,
         scales: {
@@ -73,12 +69,141 @@ const socket = io("http://localhost:3000");
 // DOM Elements
 // =========================
 
-const connectionStatus = document.getElementById("connection-status");
-const deviceStatus = document.getElementById("device-status");
-const deviceName = document.getElementById("device-name");
+const connectionStatus =
+    document.getElementById("connection-status");
 
-const temperatureValue = document.getElementById("temperature-value");
-const humidityValue = document.getElementById("humidity-value");
+const deviceStatus =
+    document.getElementById("device-status");
+
+const deviceName =
+    document.getElementById("device-name");
+
+const temperatureValue =
+    document.getElementById("temperature-value");
+
+const humidityValue =
+    document.getElementById("humidity-value");
+
+const telemetryTableBody =
+    document.getElementById("telemetry-table-body");
+
+const exportCsvButton =
+    document.getElementById("export-csv");
+
+const exportJsonButton =
+    document.getElementById("export-json");
+
+
+// =========================
+// Historical Log Table
+// =========================
+
+function addTelemetryRow(telemetry) {
+    const row = document.createElement("tr");
+
+    const values = [
+        new Date(telemetry.timestamp).toLocaleString(),
+        telemetry.sensorId,
+        `${telemetry.temperature} °C`,
+        `${telemetry.humidity} %`
+    ];
+
+    values.forEach((value) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+    });
+
+    // Newest reading appears first
+    telemetryTableBody.prepend(row);
+}
+
+
+// =========================
+// CSV Export
+// =========================
+
+function escapeCsv(value) {
+    const text = String(value ?? "");
+    return `"${text.replace(/"/g, '""')}"`;
+}
+
+function exportCsv() {
+    if (telemetryHistory.length === 0) {
+        alert("No telemetry data available to export.");
+        return;
+    }
+
+    const headers = [
+        "Timestamp",
+        "Device",
+        "Temperature",
+        "Humidity"
+    ];
+
+    const rows = telemetryHistory.map((item) => [
+        item.timestamp,
+        item.sensorId,
+        item.temperature,
+        item.humidity
+    ]);
+
+    const csvContent = [
+        headers.map(escapeCsv).join(","),
+        ...rows.map((row) => row.map(escapeCsv).join(","))
+    ].join("\r\n");
+
+    downloadFile(
+        csvContent,
+        "telemetry-history.csv",
+        "text/csv;charset=utf-8;"
+    );
+}
+
+
+// =========================
+// JSON Export
+// =========================
+
+function exportJson() {
+    if (telemetryHistory.length === 0) {
+        alert("No telemetry data available to export.");
+        return;
+    }
+
+    const jsonContent = JSON.stringify(telemetryHistory, null, 2);
+
+    downloadFile(
+        jsonContent,
+        "telemetry-history.json",
+        "application/json"
+    );
+}
+
+
+// =========================
+// Download Helper
+// =========================
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+}
+
+
+// Connect Export Buttons
+exportCsvButton.addEventListener("click", exportCsv);
+exportJsonButton.addEventListener("click", exportJson);
 
 
 // =========================
@@ -86,7 +211,6 @@ const humidityValue = document.getElementById("humidity-value");
 // =========================
 
 socket.on("connect", () => {
-
     console.log("Connected to backend");
 
     connectionStatus.textContent = "● Connected";
@@ -102,7 +226,6 @@ socket.on("connect", () => {
 // =========================
 
 socket.on("disconnect", () => {
-
     console.log("Disconnected from backend");
 
     connectionStatus.textContent = "● Disconnected";
@@ -112,82 +235,128 @@ socket.on("disconnect", () => {
     deviceStatus.textContent = "Offline";
 });
 
+// =========================
+// Update Charts Per Device
+// =========================
+
+const deviceChartColors = [
+    "#2563eb",
+    "#dc2626",
+    "#16a34a",
+    "#9333ea",
+    "#ea580c",
+    "#0891b2",
+    "#db2777"
+];
+
+function updateDeviceChart(chart, sensorId, value, timestamp) {
+    const time = new Date(timestamp).toLocaleTimeString();
+
+    // Add a separate line when a new device appears
+    let dataset = chart.data.datasets.find(
+        item => item.label === sensorId
+    );
+
+    if (!dataset) {
+        const color =
+            deviceChartColors[
+                chart.data.datasets.length % deviceChartColors.length
+            ];
+
+        dataset = {
+            label: sensorId,
+            data: Array(chart.data.labels.length).fill(null),
+            borderColor: color,
+            backgroundColor: color,
+            borderWidth: 2,
+            tension: 0.3,
+            spanGaps: false
+        };
+
+        chart.data.datasets.push(dataset);
+    }
+
+    // Keep each device's readings aligned to the same time labels
+    chart.data.labels.push(time);
+
+    chart.data.datasets.forEach(item => {
+        item.data.push(item === dataset ? value : null);
+    });
+
+    // Keep the latest 60 readings
+    if (chart.data.labels.length > 60) {
+        chart.data.labels.shift();
+
+        chart.data.datasets.forEach(item => {
+            item.data.shift();
+        });
+    }
+
+    chart.update();
+}
 
 // =========================
 // Receive Telemetry
 // =========================
 
 socket.on("telemetry", (data) => {
-
     console.log("Telemetry received:", data);
 
+    // Use the backend's current field name
+    const sensorId = data.sensorId;
 
-    // =========================
-    // Update Device Name
-    // =========================
-
-    if (data.sensorId !== undefined) {
-        deviceName.textContent = data.sensorId;
+    if (sensorId !== undefined) {
+        deviceName.textContent = sensorId;
     }
-
-
-    // =========================
-    // Update Temperature
-    // =========================
 
     if (data.temperature !== undefined) {
         temperatureValue.textContent = `${data.temperature} °C`;
     }
 
-
-    // =========================
-    // Update Humidity
-    // =========================
-
     if (data.humidity !== undefined) {
         humidityValue.textContent = `${data.humidity} %`;
     }
 
+    const time = data.timestamp || new Date().toISOString();
 
     // =========================
-    // Update Temperature Chart
-    // =========================
+// Update Charts Per Device
+// =========================
 
-    if (data.temperature !== undefined) {
+const chartSensorId = String(data.sensorId ?? "Unknown");
+const timestamp = data.timestamp || new Date().toISOString();
 
-        const time = new Date().toLocaleTimeString();
+if (data.temperature !== undefined) {
+    updateDeviceChart(
+        temperatureChart,
+        sensorId,
+        data.temperature,
+        timestamp
+    );
+}
 
-        temperatureChart.data.labels.push(time);
-        temperatureChart.data.datasets[0].data.push(data.temperature);
+if (data.humidity !== undefined) {
+    updateDeviceChart(
+        humidityChart,
+        chartSensorId,
+        data.humidity,
+        timestamp
+    );
+}
 
-        // Keep only the latest 60 points
-        if (temperatureChart.data.labels.length > 60) {
-            temperatureChart.data.labels.shift();
-            temperatureChart.data.datasets[0].data.shift();
-        }
+    // Save and display the historical reading
+    const record = {
+        timestamp: time,
+        sensorId: sensorId ?? "Unknown",
+        temperature: data.temperature ?? "",
+        humidity: data.humidity ?? ""
+    };
 
-        temperatureChart.update();
+    telemetryHistory.push(record);
+
+    if (telemetryHistory.length > MAX_HISTORY) {
+        telemetryHistory.shift();
     }
 
-
-    // =========================
-    // Update Humidity Chart
-    // =========================
-
-    if (data.humidity !== undefined) {
-
-        const time = new Date().toLocaleTimeString();
-
-        humidityChart.data.labels.push(time);
-        humidityChart.data.datasets[0].data.push(data.humidity);
-
-        // Keep only the latest 60 points
-        if (humidityChart.data.labels.length > 60) {
-            humidityChart.data.labels.shift();
-            humidityChart.data.datasets[0].data.shift();
-        }
-
-        humidityChart.update();
-    }
-
+    addTelemetryRow(record);
 });
