@@ -62,7 +62,12 @@ const humidityChart = new Chart(humidityCtx, {
 // WebSocket Connection
 // =========================
 
-const socket = io("http://localhost:3000");
+const socket = io("http://localhost:3000", {
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 30000
+});
 
 
 // =========================
