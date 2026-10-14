@@ -6,6 +6,13 @@
 const telemetryHistory = [];
 const MAX_HISTORY = 1000;
 
+// =========================
+// Per-Device Statistics
+// =========================
+
+const deviceStatistics = {};
+const MAX_STATISTICS_HISTORY = 1000;
+
 
 // =========================
 // Temperature Chart
@@ -364,4 +371,97 @@ if (data.humidity !== undefined) {
     }
 
     addTelemetryRow(record);
+    updateDeviceStatistics(record);
 });
+// =========================
+// Device Statistics
+// =========================
+
+function updateDeviceStatistics(telemetry) {
+    const sensorId = String(telemetry.sensorId ?? "Unknown");
+
+    if (!deviceStatistics[sensorId]) {
+        deviceStatistics[sensorId] = {
+            temperature: [],
+            humidity: []
+        };
+    }
+
+    const stats = deviceStatistics[sensorId];
+
+    if (telemetry.temperature !== undefined &&
+        telemetry.temperature !== null &&
+        telemetry.temperature !== "") {
+        stats.temperature.push(Number(telemetry.temperature));
+    }
+
+    if (telemetry.humidity !== undefined &&
+        telemetry.humidity !== null &&
+        telemetry.humidity !== "") {
+        stats.humidity.push(Number(telemetry.humidity));
+    }
+
+    // Keep statistics based on the latest 1000 readings per device
+    stats.temperature = stats.temperature.slice(-MAX_STATISTICS_HISTORY);
+    stats.humidity = stats.humidity.slice(-MAX_STATISTICS_HISTORY);
+
+    renderDeviceStatistics();
+}
+
+function calculateStatistics(values) {
+    if (values.length === 0) {
+        return {
+            min: "--",
+            max: "--",
+            avg: "--"
+        };
+    }
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const avg = values.reduce((sum, value) => sum + value, 0)
+        / values.length;
+
+    return {
+        min: min.toFixed(2),
+        max: max.toFixed(2),
+        avg: avg.toFixed(2)
+    };
+}
+
+function renderDeviceStatistics() {
+    const container = document.getElementById("device-statistics");
+
+    if (!container) return;
+
+    container.replaceChildren();
+
+    Object.entries(deviceStatistics).forEach(([sensorId, stats]) => {
+        const temperature = calculateStatistics(stats.temperature);
+        const humidity = calculateStatistics(stats.humidity);
+
+        const card = document.createElement("div");
+        card.className = "statistics-card";
+
+        const title = document.createElement("h3");
+        title.textContent = sensorId;
+        card.appendChild(title);
+
+        const details = [
+            ["Temperature Min", `${temperature.min} °C`],
+            ["Temperature Max", `${temperature.max} °C`],
+            ["Temperature Avg", `${temperature.avg} °C`],
+            ["Humidity Min", `${humidity.min} %`],
+            ["Humidity Max", `${humidity.max} %`],
+            ["Humidity Avg", `${humidity.avg} %`]
+        ];
+
+        details.forEach(([label, value]) => {
+            const item = document.createElement("p");
+            item.textContent = `${label}: ${value}`;
+            card.appendChild(item);
+        });
+
+        container.appendChild(card);
+    });
+}
