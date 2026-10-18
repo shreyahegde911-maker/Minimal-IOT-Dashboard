@@ -121,8 +121,51 @@ function addTelemetryRow(telemetry) {
 
     // Newest reading appears first
     telemetryTableBody.prepend(row);
+}let filteredHistory = null;
+
+function renderTelemetryTable(records) {
+    telemetryTableBody.innerHTML = "";
+
+    records.forEach((telemetry) => {
+        addTelemetryRow(telemetry);
+    });
 }
 
+function applyDateFilter() {
+    const startValue = document.getElementById("start-date").value;
+    const endValue = document.getElementById("end-date").value;
+    const message = document.getElementById("filter-message");
+
+    if (startValue && endValue && startValue > endValue) {
+        message.textContent = "Start date cannot be after end date.";
+        return;
+    }
+
+    const start = startValue
+        ? new Date(`${startValue}T00:00:00`).getTime()
+        : -Infinity;
+
+    const end = endValue
+        ? new Date(`${endValue}T00:00:00`).getTime() + 86400000
+        : Infinity;
+
+    filteredHistory = telemetryHistory.filter((record) => {
+        const timestamp = new Date(record.timestamp).getTime();
+        return timestamp >= start && timestamp < end;
+    });
+
+    renderTelemetryTable(filteredHistory);
+    message.textContent = `${filteredHistory.length} reading(s) found.`;
+}
+
+function clearDateFilter() {
+    document.getElementById("start-date").value = "";
+    document.getElementById("end-date").value = "";
+    document.getElementById("filter-message").textContent = "";
+
+    filteredHistory = null;
+    renderTelemetryTable(telemetryHistory);
+}
 
 // =========================
 // CSV Export
@@ -363,5 +406,17 @@ if (data.humidity !== undefined) {
         telemetryHistory.shift();
     }
 
+    if (filteredHistory === null) {
     addTelemetryRow(record);
+    } 
+    else {
+        applyDateFilter();
+    }
 });
+document
+    .getElementById("apply-date-filter")
+    .addEventListener("click", applyDateFilter);
+
+document
+    .getElementById("clear-date-filter")
+    .addEventListener("click", clearDateFilter);

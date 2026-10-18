@@ -244,3 +244,39 @@ tbody tr:hover {
         padding: 0 15px;
     }
 }
+
+.date-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.date-filter label {
+    font-weight: 600;
+}
+
+.date-filter input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.date-filter button {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #2563eb;
+    color: white;
+}
+
+.date-filter button:hover {
+    opacity: 0.85;
+}
+
+#filter-message {
+    margin: 8px 0;
+    font-size: 14px;
+}
