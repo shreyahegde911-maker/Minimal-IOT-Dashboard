@@ -77,17 +77,10 @@ const socket = io("http://localhost:3000", {
 const connectionStatus =
     document.getElementById("connection-status");
 
-const deviceStatus =
-    document.getElementById("device-status");
+const deviceCards = document.getElementById("device-cards");
 
-const deviceName =
-    document.getElementById("device-name");
-
-const temperatureValue =
-    document.getElementById("temperature-value");
-
-const humidityValue =
-    document.getElementById("humidity-value");
+// Store the latest readings for each device
+const deviceReadings = new Map();
 
 const telemetryTableBody =
     document.getElementById("telemetry-table-body");
@@ -97,6 +90,58 @@ const exportCsvButton =
 
 const exportJsonButton =
     document.getElementById("export-json");
+
+
+function renderDeviceCards() {
+    deviceCards.innerHTML = "";
+
+    deviceReadings.forEach((device, sensorId) => {
+        const card = document.createElement("div");
+        card.className = "device-card";
+
+        const header = document.createElement("div");
+        header.className = "device-card-header";
+
+        const name = document.createElement("h3");
+        name.textContent = sensorId;
+
+        const status = document.createElement("span");
+        status.className = "online-status";
+        status.textContent = device.online ? "Online" : "Offline";
+
+        header.append(name, status);
+
+        const values = document.createElement("div");
+        values.className = "telemetry-values";
+
+        const temperatureItem = document.createElement("div");
+        temperatureItem.className = "telemetry-item";
+
+        const temperatureLabel = document.createElement("span");
+        temperatureLabel.textContent = "Temperature";
+
+        const temperatureValue = document.createElement("strong");
+        temperatureValue.textContent =
+            device.temperature === null ? "-- °C" : `${device.temperature} °C`;
+
+        temperatureItem.append(temperatureLabel, temperatureValue);
+
+        const humidityItem = document.createElement("div");
+        humidityItem.className = "telemetry-item";
+
+        const humidityLabel = document.createElement("span");
+        humidityLabel.textContent = "Humidity";
+
+        const humidityValue = document.createElement("strong");
+        humidityValue.textContent =
+            device.humidity === null ? "-- %" : `${device.humidity} %`;
+
+        humidityItem.append(humidityLabel, humidityValue);
+        values.append(temperatureItem, humidityItem);
+        card.append(header, values);
+        deviceCards.appendChild(card);
+    });
+}
 
 
 // =========================
@@ -264,10 +309,7 @@ socket.on("connect", () => {
     connectionStatus.textContent = "● Connected";
     connectionStatus.classList.remove("disconnected");
     connectionStatus.classList.add("connected");
-
-    deviceStatus.textContent = "Online";
 });
-
 
 // =========================
 // WebSocket Disconnected
@@ -279,8 +321,6 @@ socket.on("disconnect", () => {
     connectionStatus.textContent = "● Disconnected";
     connectionStatus.classList.remove("connected");
     connectionStatus.classList.add("disconnected");
-
-    deviceStatus.textContent = "Offline";
 });
 
 // =========================
@@ -351,19 +391,36 @@ socket.on("telemetry", (data) => {
     console.log("Telemetry received:", data);
 
     // Use the backend's current field name
-    const sensorId = data.sensorId;
+    const sensorId = String(data.sensorId ?? "Unknown");
 
-    if (sensorId !== undefined) {
-        deviceName.textContent = sensorId;
-    }
+    const device = deviceReadings.get(sensorId) ?? {
+        temperature: null,
+        humidity: null,
+        online: true
+    };
 
     if (data.temperature !== undefined) {
-        temperatureValue.textContent = `${data.temperature} °C`;
+        device.temperature = data.temperature;
     }
 
     if (data.humidity !== undefined) {
-        humidityValue.textContent = `${data.humidity} %`;
+        device.humidity = data.humidity;
     }
+
+    device.online = true;
+    device.lastSeen = Date.now();
+
+    if (device.offlineTimer) {
+        clearTimeout(device.offlineTimer);
+    }
+
+    device.offlineTimer = setTimeout(() => {
+        device.online = false;
+        renderDeviceCards();
+    }, 10000);
+    deviceReadings.set(sensorId, device);
+
+    renderDeviceCards();
 
     const time = data.timestamp || new Date().toISOString();
 
