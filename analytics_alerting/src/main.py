@@ -4,7 +4,7 @@ import requests
 import socketio
 
 from analytics_alerting.src.config import Config
-from analytics_alerting.src.anomaly_detector import ZScoreAnomalyDetector
+from analytics_alerting.src.anomaly_detector import ZScoreAnomalyDetector, IsolationForestDetector
 from analytics_alerting.src.notification_worker import NotificationWorker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -12,6 +12,7 @@ logger = logging.getLogger("AnalyticsMain")
 
 sio = socketio.Client()
 zscore_detector = ZScoreAnomalyDetector()
+ml_detector = IsolationForestDetector()
 notification_worker = NotificationWorker()
 
 
@@ -32,6 +33,7 @@ def on_telemetry(data):
     temp = data.get("temperature")
     humidity = data.get("humidity")
 
+    # 1. Real-time statistical Z-score checks
     if temp is not None:
         res_temp = zscore_detector.evaluate_reading(sensor_id, "temperature", temp)
         if res_temp["is_anomaly"]:
@@ -41,6 +43,13 @@ def on_telemetry(data):
         res_hum = zscore_detector.evaluate_reading(sensor_id, "humidity", humidity)
         if res_hum["is_anomaly"]:
             notification_worker.dispatch_alert(res_hum)
+
+    # 2. Multivariate Isolation Forest ML evaluation
+    if temp is not None and humidity is not None:
+        res_ml = ml_detector.evaluate_telemetry(sensor_id, temp, humidity)
+        if res_ml["is_anomaly"]:
+            logger.warning(f"🤖 ML Isolation Forest Anomaly detected on {sensor_id}: {res_ml['reason']} (Score: {res_ml['score']})")
+            notification_worker.dispatch_alert(res_ml)
 
 
 def main():

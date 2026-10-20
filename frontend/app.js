@@ -121,7 +121,9 @@ function addTelemetryRow(telemetry) {
 
     // Newest reading appears first
     telemetryTableBody.prepend(row);
-}let filteredHistory = null;
+}
+
+let filteredHistory = null;
 
 function renderTelemetryTable(records) {
     telemetryTableBody.innerHTML = "";
@@ -135,6 +137,11 @@ function applyDateFilter() {
     const startValue = document.getElementById("start-date").value;
     const endValue = document.getElementById("end-date").value;
     const message = document.getElementById("filter-message");
+
+    if (!startValue && !endValue) {
+        message.textContent = "Please select at least a start or end date.";
+        return;
+    }
 
     if (startValue && endValue && startValue > endValue) {
         message.textContent = "Start date cannot be after end date.";
@@ -177,7 +184,9 @@ function escapeCsv(value) {
 }
 
 function exportCsv() {
-    if (telemetryHistory.length === 0) {
+    const dataToExport = filteredHistory !== null ? filteredHistory : telemetryHistory;
+
+    if (dataToExport.length === 0) {
         alert("No telemetry data available to export.");
         return;
     }
@@ -189,7 +198,7 @@ function exportCsv() {
         "Humidity"
     ];
 
-    const rows = telemetryHistory.map((item) => [
+    const rows = dataToExport.map((item) => [
         item.timestamp,
         item.sensorId,
         item.temperature,
@@ -214,12 +223,14 @@ function exportCsv() {
 // =========================
 
 function exportJson() {
-    if (telemetryHistory.length === 0) {
+    const dataToExport = filteredHistory !== null ? filteredHistory : telemetryHistory;
+
+    if (dataToExport.length === 0) {
         alert("No telemetry data available to export.");
         return;
     }
 
-    const jsonContent = JSON.stringify(telemetryHistory, null, 2);
+    const jsonContent = JSON.stringify(dataToExport, null, 2);
 
     downloadFile(
         jsonContent,
