@@ -95,3 +95,27 @@ SELECT add_retention_policy(
     'telemetry_logs',
     drop_after => INTERVAL '30 days'
 );
+
+-- =========================================================
+-- Initial population of continuous aggregates
+-- Run after schema creation if historical data already exists.
+-- These ranges cover the previous 30 days.
+-- =========================================================
+
+CALL refresh_continuous_aggregate(
+    'telemetry_minute_avg',
+    NOW() - INTERVAL '30 days',
+    NOW() - INTERVAL '1 minute'
+);
+
+CALL refresh_continuous_aggregate(
+    'telemetry_hourly_avg',
+    NOW() - INTERVAL '30 days',
+    NOW() - INTERVAL '1 hour'
+);
+
+CALL refresh_continuous_aggregate(
+    'telemetry_daily_avg',
+    NOW() - INTERVAL '30 days',
+    NOW() - INTERVAL '1 day'
+);
