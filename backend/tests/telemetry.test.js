@@ -57,6 +57,92 @@ describe("Telemetry API Tests", () => {
         expect(response.body.message)
             .toBe("temperature must be between -40 and 85");
     });
+    
+    
+    // TC-VAL-01: Reject missing required fields
+    test("TC-VAL-01: should reject telemetry with missing fields", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "TEST-003",
+                temperature: 24.5
+            });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message)
+            .toBe("sensorId, temperature and humidity are required");
+    });
+
+    // TC-VAL-02: Reject empty sensor ID
+    test("TC-VAL-02: should reject an empty sensor ID", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "   ",
+                temperature: 24.5,
+                humidity: 55
+            });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message)
+            .toBe("sensorId must be a non-empty string");
+    });
+
+    // TC-VAL-03: Reject non-numeric temperature
+    test("TC-VAL-03: should reject non-numeric temperature", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "TEST-004",
+                temperature: "hot",
+                humidity: 55
+            });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message)
+            .toBe("temperature must be a number");
+    });
+
+    // TC-VAL-04: Reject out-of-range humidity
+    test("TC-VAL-04: should reject out-of-range humidity", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "TEST-005",
+                temperature: 24.5,
+                humidity: 120
+            });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message)
+            .toBe("humidity must be between 0 and 100");
+    });
+
+    
+    // TC-VAL-05: Invalid telemetry must not be stored
+    test("TC-VAL-05: should not store invalid telemetry", async () => {
+        const before = await request(app).get("/api/telemetry");
+
+        await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "INVALID-TEST",
+                temperature: 150,
+                humidity: 55
+            })
+            .expect(400);
+
+        const after = await request(app).get("/api/telemetry");
+
+        expect(after.body.count).toBe(before.body.count);
+        expect(
+            after.body.data.some(item => item.sensorId === "INVALID-TEST")
+        ).toBe(false);
+    });
 
     // TC-WS-01
     test("TC-WS-01: should broadcast telemetry to connected WebSocket clients", async () => {
