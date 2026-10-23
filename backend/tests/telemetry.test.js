@@ -144,6 +144,54 @@ describe("Telemetry API Tests", () => {
         ).toBe(false);
     });
 
+    // TC-API-01: Get all telemetry
+    test("TC-API-01: should return all telemetry records", async () => {
+        const response = await request(app)
+            .get("/api/telemetry");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.count).toBeGreaterThanOrEqual(0);
+        expect(Array.isArray(response.body.data)).toBe(true);
+    });
+
+    // TC-API-02: Get telemetry for a specific sensor
+    test("TC-API-02: should return telemetry for the requested sensor", async () => {
+        const sensorId = "API-TEST-SENSOR";
+
+        await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId,
+                temperature: 25,
+                humidity: 50
+            })
+            .expect(201);
+
+        const response = await request(app)
+            .get(`/api/telemetry/${sensorId}`);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.sensorId).toBe(sensorId);
+        expect(response.body.count).toBeGreaterThanOrEqual(1);
+
+        expect(
+            response.body.data.every(item => item.sensorId === sensorId)
+        ).toBe(true);
+    });
+
+    // TC-API-03: Unknown sensor returns no records
+    test("TC-API-03: should return an empty list for an unknown sensor", async () => {
+        const response = await request(app)
+            .get("/api/telemetry/UNKNOWN-SENSOR-999");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.count).toBe(0);
+        expect(response.body.data).toEqual([]);
+    });
+
     // TC-WS-01
     test("TC-WS-01: should broadcast telemetry to connected WebSocket clients", async () => {
 
