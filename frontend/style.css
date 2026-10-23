@@ -244,6 +244,35 @@ tbody tr:hover {
         padding: 0 15px;
     }
 }
+/* Device Statistics */
+
+.statistics-section {
+    margin-top: 24px;
+}
+
+.statistics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.statistics-card {
+    padding: 18px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.statistics-card h3 {
+    margin-top: 0;
+    margin-bottom: 14px;
+}
+
+.statistics-card p {
+    margin: 8px 0;
+    color: #374151;
+}
 
 .date-filter {
     display: flex;
