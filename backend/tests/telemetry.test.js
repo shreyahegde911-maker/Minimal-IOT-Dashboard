@@ -185,4 +185,21 @@ describe("Telemetry API Tests", () => {
         socket.disconnect();
     });
 
+    // TC-WS-02: Client disconnection should not crash the backend
+    test("TC-WS-02: should handle client disconnection gracefully", async () => {
+        const socket = io(serverAddress);
+
+        await new Promise((resolve, reject) => {
+            socket.once("connect", resolve);
+            socket.once("connect_error", reject);
+        });
+
+        socket.disconnect();
+
+        const response = await request(app).get("/api/telemetry");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+    });
+
 });
