@@ -250,4 +250,15 @@ describe("Telemetry API Tests", () => {
         expect(response.body.success).toBe(true);
     });
 
+    // TC-HEALTH-01: Health check endpoint returns status and uptime diagnostics
+    test("TC-HEALTH-01: should return system health status and uptime", async () => {
+        const response = await request(app).get("/api/health");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.status).toBe("healthy");
+        expect(typeof response.body.uptime).toBe("number");
+        expect(response.body.uptime).toBeGreaterThanOrEqual(0);
+        expect(response.body.timestamp).toBeDefined();
+    });
+
 });

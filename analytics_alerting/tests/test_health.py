@@ -32,3 +32,16 @@ def test_health_diagnostic_runner_config_keys():
     assert "backend_url" in health["config"]
     assert "z_score_threshold" in health["config"]
     assert "discord_configured" in health["channels"]
+
+
+def test_health_diagnostic_self_check():
+    zscore_det = ZScoreAnomalyDetector()
+    ml_det = IsolationForestDetector()
+    health_runner = HealthDiagnosticRunner(zscore_det, ml_det)
+
+    result = health_runner.run_self_check()
+    assert result["healthy"] is True
+    assert result["checks"]["service_online"] is True
+    assert result["checks"]["zscore_configured"] is True
+    assert result["checks"]["backend_url_set"] is True
+
