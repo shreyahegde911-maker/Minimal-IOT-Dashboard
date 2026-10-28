@@ -11,19 +11,16 @@ const {
     broadcastTelemetry
 } = require("../websocket/socket");
 
-
-function receiveTelemetry(req, res) {
-
+// Receive and persist telemetry
+async function receiveTelemetry(req, res) {
     const { sensorId, temperature, humidity } = req.body;
 
-    // Validate incoming telemetry
     const validation = validateTelemetry(
         sensorId,
         temperature,
         humidity
     );
 
-    // Reject invalid data
     if (!validation.valid) {
         return res.status(400).json({
             success: false,
@@ -31,53 +28,78 @@ function receiveTelemetry(req, res) {
         });
     }
 
-    // Create telemetry record with timestamp
     const telemetry = createTelemetryRecord(
         sensorId,
         temperature,
         humidity
     );
-    storeTelemetry(telemetry);
 
-    // Log accepted telemetry
-    console.log("Telemetry received:", telemetry);
+    try {
+        // Save to PostgreSQL before reporting success
+        const savedTelemetry = await storeTelemetry(telemetry);
 
-    // Broadcast telemetry to connected clients
-    broadcastTelemetry(telemetry);
+        console.log("Telemetry received:", savedTelemetry);
 
-    // Send successful response
-    res.status(201).json({
-        success: true,
-        message: "Telemetry received successfully",
-        data: telemetry
-    });
+        // Broadcast only after successful database insertion
+        broadcastTelemetry(savedTelemetry);
+
+        return res.status(201).json({
+            success: true,
+            message: "Telemetry received successfully",
+            data: savedTelemetry
+        });
+    } catch (error) {
+        console.error("Failed to store telemetry:", error.message);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to store telemetry"
+        });
+    }
 }
 
-function getTelemetry(req, res) {
+// Retrieve all telemetry
+async function getTelemetry(req, res) {
+    try {
+        const telemetry = await getAllTelemetry();
 
-    const telemetry = getAllTelemetry();
+        return res.status(200).json({
+            success: true,
+            count: telemetry.length,
+            data: telemetry
+        });
+    } catch (error) {
+        console.error("Failed to retrieve telemetry:", error.message);
 
-    res.status(200).json({
-        success: true,
-        count: telemetry.length,
-        data: telemetry
-    });
+        return res.status(500).json({
+            success: false,
+            message: "Failed to retrieve telemetry"
+        });
+    }
 }
 
-function getTelemetryForSensor(req, res) {
-
+// Retrieve telemetry for one sensor
+async function getTelemetryForSensor(req, res) {
     const { sensorId } = req.params;
 
-    const telemetry = getTelemetryBySensor(sensorId);
+    try {
+        const telemetry = await getTelemetryBySensor(sensorId);
 
-    res.status(200).json({
-        success: true,
-        sensorId: sensorId,
-        count: telemetry.length,
-        data: telemetry
-    });
+        return res.status(200).json({
+            success: true,
+            sensorId,
+            count: telemetry.length,
+            data: telemetry
+        });
+    } catch (error) {
+        console.error("Failed to retrieve sensor telemetry:", error.message);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to retrieve sensor telemetry"
+        });
+    }
 }
-
 
 module.exports = {
     receiveTelemetry,
