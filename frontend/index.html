@@ -30,35 +30,11 @@
 
             <h2>Device Status</h2>
 
-            <div class="device-card">
-
-                <div class="device-card-header">
-                    <h3>Device 01</h3>
-
-                    <span id="device-status" class="online-status">
-                        Offline
-                    </span>
-                </div>
-
-                <div class="telemetry-values">
-
-                    <div class="telemetry-item">
-                        <span>Temperature</span>
-                        <strong id="temperature-value">-- °C</strong>
-                    </div>
-
-                    <div class="telemetry-item">
-                        <span>Humidity</span>
-                        <strong id="humidity-value">-- %</strong>
-                    </div>
-
-                </div>
-
+            <div id="device-cards" class="device-cards">
+                <!-- Device cards will be created dynamically -->
             </div>
 
         </section>
-
-
         <!-- Live Charts -->
         <section class="charts-section">
 
@@ -81,6 +57,20 @@
         <section class="history-section">
 
             <h2>Historical Logs</h2>
+            
+            <div class="date-filter">
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date">
+
+                <label for="end-date">End Date:</label>
+                <input type="date" id="end-date">
+
+                <button id="apply-date-filter">Apply Filter</button>
+                <button id="clear-date-filter">Clear Filter</button>
+            </div>
+
+            <p id="filter-message" role="status"></p>
+
 
             <div class="export-buttons">
                 <button id="export-csv">Export CSV</button>

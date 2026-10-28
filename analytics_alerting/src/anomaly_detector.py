@@ -96,6 +96,35 @@ class IsolationForestDetector:
             n_estimators=100
         )
         self.is_fitted = False
+        self.sensor_history: Dict[str, deque] = {}
+        self.training_buffer: List[List[float]] = []
+
+    def extract_features(self, sensor_id: str, temp: float, humidity: float) -> List[float]:
+        """
+        Extracts multivariate feature vector [temp, humidity, delta_temp, delta_hum].
+        """
+        if sensor_id not in self.sensor_history:
+            self.sensor_history[sensor_id] = deque(maxlen=20)
+
+        history = self.sensor_history[sensor_id]
+        if len(history) > 0:
+            prev_temp, prev_hum = history[-1]
+            delta_temp = round(float(temp - prev_temp), 3)
+            delta_hum = round(float(humidity - prev_hum), 3)
+        else:
+            delta_temp = 0.0
+            delta_hum = 0.0
+
+        history.append((temp, humidity))
+        feature_vector = [float(temp), float(humidity), delta_temp, delta_hum]
+        
+        # Collect baseline observations for online auto-training
+        if not self.is_fitted:
+            self.training_buffer.append(feature_vector)
+            if len(self.training_buffer) >= 15:
+                self.train(np.array(self.training_buffer))
+
+        return feature_vector
 
     def train(self, feature_matrix: np.ndarray) -> None:
         """Trains the Isolation Forest model on historical feature matrix."""
@@ -106,7 +135,7 @@ class IsolationForestDetector:
     def predict_anomaly(self, feature_vector: List[float]) -> Dict[str, Any]:
         """Predicts whether a feature vector is anomalous."""
         if not self.is_fitted:
-            return {"is_anomaly": False, "score": 0.0, "reason": "ML Model not yet trained"}
+            return {"is_anomaly": False, "score": 0.0, "reason": "ML Model warming up"}
 
         X = np.array([feature_vector])
         prediction = self.model.predict(X)[0]  # -1 for anomaly, 1 for normal
@@ -117,4 +146,21 @@ class IsolationForestDetector:
             "is_anomaly": is_anomaly,
             "score": round(score, 4),
             "reason": "Multivariate Isolation Forest anomaly flagged" if is_anomaly else "Normal"
+        }
+
+    def evaluate_telemetry(self, sensor_id: str, temp: float, humidity: float) -> Dict[str, Any]:
+        """
+        Extracts rate-of-change features and evaluates multivariate anomaly.
+        """
+        features = self.extract_features(sensor_id, temp, humidity)
+        pred = self.predict_anomaly(features)
+        return {
+            "sensor_id": sensor_id,
+            "metric": "multivariate_ml",
+            "value": f"T={temp}°C, H={humidity}%",
+            "features": features,
+            "is_anomaly": pred["is_anomaly"],
+            "score": pred["score"],
+            "reason": pred["reason"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
