@@ -34,3 +34,29 @@ def test_simulator_anomaly_injection():
     # Tick 26 should return to normal curve range
     normal_payload = generate_telemetry(sensor, tick=26)
     assert normal_payload["temperature"] < 35.0
+
+
+def test_simulator_freeze_anomaly():
+    """Verify that freeze anomaly (-5.0°C) triggers on tick 50 for sensor-02."""
+    sensor = SENSORS[1]  # sensor-02
+    anomaly_payload = generate_telemetry(sensor, tick=50)
+    assert anomaly_payload["temperature"] == -5.0
+
+
+def test_simulator_humidity_drop_anomaly():
+    """Verify that severe humidity drop (10.0%) triggers on tick 75 for sensor-03."""
+    sensor = SENSORS[2]  # sensor-03
+    anomaly_payload = generate_telemetry(sensor, tick=75)
+    assert anomaly_payload["humidity"] == 10.0
+
+
+def test_simulator_run_cycle_dry_run():
+    """Verify that run_cycle executes across all configured sensors in dry_run mode."""
+    from simulator.simulator import run_cycle
+    payloads = run_cycle(tick=1, dry_run=True)
+    assert len(payloads) == len(SENSORS)
+    for p in payloads:
+        assert "sensorId" in p
+        assert "temperature" in p
+        assert "humidity" in p
+
