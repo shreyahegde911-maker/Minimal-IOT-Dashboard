@@ -1,8 +1,10 @@
-import time
-import math
-import random
+import argparse
 import logging
+import math
 import os
+import random
+import time
+from typing import Dict, List, Optional
 import requests
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -33,10 +35,19 @@ def generate_telemetry(sensor: dict, tick: int) -> dict:
     noise_hum = random.uniform(-1.0, 1.0)
     humidity = round(max(0.0, min(100.0, base_h + diurnal_hum + noise_hum)), 2)
 
-    # Periodically inject anomalies every 25 ticks for testing analytics engine
+    # Multi-mode anomaly injection across virtual sensors for analytics validation:
+    # 1. High temperature threshold breach & Z-score spike (sensor-01 every 25 ticks)
     if tick > 0 and tick % 25 == 0 and sensor["id"] == "sensor-01":
-        logger.warning(f"🔥 INJECTING TEST ANOMALY SPIKE into {sensor['id']}!")
-        temperature = 42.5  # High temperature threshold breach & Z-Score spike!
+        logger.warning(f"🔥 INJECTING TEST ANOMALY SPIKE into {sensor['id']} (42.5°C)!")
+        temperature = 42.5
+    # 2. Freezing out-of-spec anomaly (sensor-02 every 50 ticks)
+    elif tick > 0 and tick % 50 == 0 and sensor["id"] == "sensor-02":
+        logger.warning(f"❄️ INJECTING FREEZE ANOMALY into {sensor['id']} (-5.0°C)!")
+        temperature = -5.0
+    # 3. Severe humidity depletion anomaly (sensor-03 every 75 ticks)
+    elif tick > 0 and tick % 75 == 0 and sensor["id"] == "sensor-03":
+        logger.warning(f"💧 INJECTING HUMIDITY DROP ANOMALY into {sensor['id']} (10.0%)!")
+        humidity = 10.0
 
     return {
         "sensorId": sensor["id"],
@@ -45,24 +56,49 @@ def generate_telemetry(sensor: dict, tick: int) -> dict:
     }
 
 
+def run_cycle(tick: int, ingest_url: str = BACKEND_INGEST_URL, dry_run: bool = False) -> List[Dict]:
+    """Runs a single simulation tick across all virtual sensors."""
+    emitted = []
+    for sensor in SENSORS:
+        payload = generate_telemetry(sensor, tick)
+        emitted.append(payload)
+
+        if dry_run:
+            logger.info(f"[DRY-RUN] Tick {tick} | {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
+            continue
+
+        try:
+            res = requests.post(ingest_url, json=payload, timeout=3)
+            if res.status_code == 201:
+                logger.info(f"Published telemetry: {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
+            else:
+                logger.warning(f"Backend returned HTTP {res.status_code}: {res.text}")
+        except Exception as e:
+            logger.error(f"Failed to publish telemetry to backend: {e}")
+
+    return emitted
+
+
 def main():
-    logger.info(f"Starting Telemetry Simulator targeting {BACKEND_INGEST_URL}...")
+    parser = argparse.ArgumentParser(description="Minimal IoT Multi-Sensor Telemetry Simulator")
+    parser.add_argument("--url", default=BACKEND_INGEST_URL, help="Target backend ingestion URL")
+    parser.add_argument("--interval", type=int, default=SIMULATION_INTERVAL_SEC, help="Simulation interval (sec)")
+    parser.add_argument("--ticks", type=int, default=None, help="Number of ticks to run (None=infinite)")
+    parser.add_argument("--dry-run", action="store_true", help="Generate payloads without sending network requests")
+    args = parser.parse_args()
+
+    logger.info(f"Starting Telemetry Simulator targeting {args.url} (dry_run={args.dry_run}, interval={args.interval}s)...")
     tick = 0
 
     while True:
         tick += 1
-        for sensor in SENSORS:
-            payload = generate_telemetry(sensor, tick)
-            try:
-                res = requests.post(BACKEND_INGEST_URL, json=payload, timeout=3)
-                if res.status_code == 201:
-                    logger.info(f"Published telemetry: {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
-                else:
-                    logger.warning(f"Backend returned HTTP {res.status_code}: {res.text}")
-            except Exception as e:
-                logger.error(f"Failed to publish telemetry to backend: {e}")
+        run_cycle(tick, ingest_url=args.url, dry_run=args.dry_run)
 
-        time.sleep(SIMULATION_INTERVAL_SEC)
+        if args.ticks is not None and tick >= args.ticks:
+            logger.info(f"Simulation completed after {tick} ticks.")
+            break
+
+        time.sleep(args.interval)
 
 
 if __name__ == "__main__":
