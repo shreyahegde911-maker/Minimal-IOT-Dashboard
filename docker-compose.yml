@@ -42,7 +42,7 @@ services:
       - DB_NAME=miniot
     restart: always
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -77,6 +77,11 @@ services:
       - TEMP_HIGH_THRESHOLD=35.0
       - ALERT_COOLDOWN_SECONDS=60
     restart: always
+    healthcheck:
+      test: ["CMD", "python", "-m", "analytics_alerting.src.health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
 networks:
   default:
