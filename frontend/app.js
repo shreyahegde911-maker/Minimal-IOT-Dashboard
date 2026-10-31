@@ -25,12 +25,23 @@ const temperatureCtx = document
 const temperatureChart = new Chart(temperatureCtx, {
     type: "line",
     data: {
-        labels: [],
         datasets: []
     },
     options: {
         responsive: true,
+        parsing: false,
         scales: {
+            x: {
+                type: "linear",
+                title: {
+                    display: true,
+                    text: "Time"
+                },
+                ticks: {
+                    callback: (value) =>
+                        new Date(value).toLocaleTimeString()
+                }
+            },
             y: {
                 beginAtZero: false
             }
@@ -50,20 +61,31 @@ const humidityCtx = document
 const humidityChart = new Chart(humidityCtx, {
     type: "line",
     data: {
-        labels: [],
         datasets: []
     },
-        
+
     options: {
         responsive: true,
+        parsing: false,
+
         scales: {
+            x: {
+                type: "linear",
+                title: {
+                    display: true,
+                    text: "Time"
+                }
+            },
             y: {
-                beginAtZero: true
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: "Humidity (%)"
+                }
             }
         }
     }
 });
-
 
 // =========================
 // WebSocket Connection
@@ -88,6 +110,99 @@ const deviceCards = document.getElementById("device-cards");
 
 // Store the latest readings for each device
 const deviceReadings = new Map();
+
+const deviceStatistics = new Map();
+
+const statisticsContainer = document.getElementById("device-statistics");
+
+function updateDeviceStatistics(sensorId, data) {
+    const stats = deviceStatistics.get(sensorId) ?? {
+        temperatures: [],
+        humidities: []
+    };
+
+    if (data.temperature !== undefined &&
+        data.temperature !== null &&
+        Number.isFinite(Number(data.temperature))) {
+        stats.temperatures.push(Number(data.temperature));
+    }
+
+    if (data.humidity !== undefined &&
+        data.humidity !== null &&
+        Number.isFinite(Number(data.humidity))) {
+        stats.humidities.push(Number(data.humidity));
+    }
+
+    deviceStatistics.set(sensorId, stats);
+}
+
+function calculateStats(values) {
+    if (values.length === 0) {
+        return { min: "--", max: "--", avg: "--" };
+    }
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const avg = values.reduce((sum, value) => sum + value, 0)
+        / values.length;
+
+    return {
+        min: min.toFixed(1),
+        max: max.toFixed(1),
+        avg: avg.toFixed(1)
+    };
+}
+
+function renderDeviceStatistics() {
+    statisticsContainer.innerHTML = "";
+
+    deviceStatistics.forEach((stats, sensorId) => {
+        const temperature = calculateStats(stats.temperatures);
+        const humidity = calculateStats(stats.humidities);
+
+        const card = document.createElement("div");
+        card.className = "statistics-card";
+
+        const title = document.createElement("h3");
+        title.textContent = sensorId;
+        card.appendChild(title);
+
+        const table = document.createElement("table");
+
+        const header = document.createElement("tr");
+        ["Metric", "Minimum", "Maximum", "Average"].forEach(text => {
+            const th = document.createElement("th");
+            th.textContent = text;
+            header.appendChild(th);
+        });
+        table.appendChild(header);
+
+        function addRow(label, values, unit) {
+            const row = document.createElement("tr");
+            const cells = [
+                label,
+                values.min === "--" ? "--" : `${values.min}${unit}`,
+                values.max === "--" ? "--" : `${values.max}${unit}`,
+                values.avg === "--" ? "--" : `${values.avg}${unit}`
+            ];
+
+            cells.forEach(text => {
+                const cell = document.createElement("td");
+                cell.textContent = text;
+                row.appendChild(cell);
+            });
+
+            table.appendChild(row);
+        }
+
+        addRow("Temperature", temperature, " °C");
+        addRow("Humidity", humidity, " %");
+
+        card.appendChild(table);
+        statisticsContainer.appendChild(card);
+    });
+}
+
 
 const telemetryTableBody =
     document.getElementById("telemetry-table-body");
@@ -355,51 +470,49 @@ const deviceChartColors = [
     "#db2777"
 ];
 
-function updateDeviceChart(chart, sensorId, value, timestamp) {
-    const time = new Date(timestamp).toLocaleTimeString();
 
-    // Add a separate line when a new device appears
+function updateDeviceChart(chart, sensorId, value, timestamp) {
+    const time = new Date(timestamp).getTime();
+
     let dataset = chart.data.datasets.find(
         item => item.label === sensorId
     );
 
     if (!dataset) {
-        const color =
-            deviceChartColors[
-                chart.data.datasets.length % deviceChartColors.length
-            ];
+        const color = deviceChartColors[
+            chart.data.datasets.length % deviceChartColors.length
+        ];
 
         dataset = {
             label: sensorId,
-            data: Array(chart.data.labels.length).fill(null),
+            data: [],
             borderColor: color,
             backgroundColor: color,
             borderWidth: 2,
+            pointRadius: 3,
             tension: 0.3,
-            spanGaps: false
+            showLine: true
         };
 
         chart.data.datasets.push(dataset);
     }
 
-    // Keep each device's readings aligned to the same time labels
-    chart.data.labels.push(time);
-
-    chart.data.datasets.forEach(item => {
-        item.data.push(item === dataset ? value : null);
+    dataset.data.push({
+        x: time,
+        y: Number(value)
     });
 
-    // Keep the latest 60 readings
-    if (chart.data.labels.length > 60) {
-        chart.data.labels.shift();
-
-        chart.data.datasets.forEach(item => {
-            item.data.shift();
-        });
+    // Keep only the latest 60 readings per device.
+    if (dataset.data.length > 60) {
+        dataset.data.shift();
     }
+
+    // Keep points in chronological order.
+    dataset.data.sort((a, b) => a.x - b.x);
 
     chart.update();
 }
+
 
 // =========================
 // Receive Telemetry
@@ -435,6 +548,8 @@ socket.on("telemetry", (data) => {
     device.offlineTimer = setTimeout(() => {
         device.online = false;
         renderDeviceCards();
+        updateDeviceStatistics(sensorId, data);
+        renderDeviceStatistics();
     }, 10000);
     deviceReadings.set(sensorId, device);
 
