@@ -49,3 +49,27 @@ class HealthDiagnosticRunner:
                 "slack_configured": bool(Config.SLACK_WEBHOOK_URL)
             }
         }
+
+    def run_self_check(self) -> Dict[str, Any]:
+        """Executes a diagnostic self-check and returns pass/fail status."""
+        health = self.get_system_health()
+        checks = {
+            "service_online": health["status"] == "HEALTHY",
+            "zscore_configured": health["config"]["z_score_threshold"] > 0,
+            "backend_url_set": bool(health["config"]["backend_url"]),
+        }
+        all_passed = all(checks.values())
+        return {
+            "healthy": all_passed,
+            "checks": checks,
+            "diagnostics": health
+        }
+
+
+if __name__ == "__main__":
+    import json
+    zscore = ZScoreAnomalyDetector()
+    ml = IsolationForestDetector()
+    runner = HealthDiagnosticRunner(zscore, ml)
+    print(json.dumps(runner.run_self_check(), indent=2))
+

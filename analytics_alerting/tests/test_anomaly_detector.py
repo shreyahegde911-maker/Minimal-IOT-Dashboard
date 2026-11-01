@@ -57,3 +57,35 @@ def test_isolation_forest_detector():
     # Test outlier point
     outlier_pred = detector.predict_anomaly([55.0, 5.0])
     assert outlier_pred["is_anomaly"] is True
+
+
+def test_isolation_forest_feature_extraction():
+    detector = IsolationForestDetector()
+    sensor_id = "sensor-feat-01"
+
+    # First reading: delta should be 0.0
+    f1 = detector.extract_features(sensor_id, 24.0, 50.0)
+    assert f1 == [24.0, 50.0, 0.0, 0.0]
+
+    # Second reading: delta should reflect difference
+    f2 = detector.extract_features(sensor_id, 26.5, 48.0)
+    assert f2 == [26.5, 48.0, 2.5, -2.0]
+
+
+def test_isolation_forest_online_telemetry_evaluation():
+    detector = IsolationForestDetector(contamination=0.1)
+    sensor_id = "sensor-eval-01"
+
+    # Stream 16 normal readings to trigger automated warm-up
+    for i in range(16):
+        res = detector.evaluate_telemetry(sensor_id, 22.0 + (i % 2) * 0.2, 50.0 + (i % 2) * 0.5)
+
+    assert detector.is_fitted is True
+    assert "features" in res
+    assert len(res["features"]) == 4
+
+    # Now evaluate an extreme multivariate outlier (60°C with sudden +38°C delta)
+    outlier_res = detector.evaluate_telemetry(sensor_id, 60.0, 10.0)
+    assert outlier_res["is_anomaly"] is True
+    assert outlier_res["score"] < 0.0
+

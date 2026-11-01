@@ -14,6 +14,28 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      timescaledb:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: miniot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d miniot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: miniot
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,7 +48,18 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
+    
+      - name: Initialize database schema
+        run: |
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              break
+            fi
+            sleep 2
+          done
+          PGPASSWORD=postgres psql -h localhost -U postgres -d miniot -f database/schema.sql
 
       - name: Run backend tests
         working-directory: backend
-        run: npm test
+        run: npm test -- --runInBand
+        timeout-minutes: 5

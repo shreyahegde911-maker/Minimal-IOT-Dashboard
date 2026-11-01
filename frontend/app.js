@@ -232,6 +232,11 @@ function applyDateFilter() {
     const message =
         document.getElementById("filter-message");
 
+    if (!startValue && !endValue) {
+        message.textContent = "Please select at least a start or end date.";
+        return;
+    }
+
     if (startValue && endValue && startValue > endValue) {
         message.textContent =
             "Start date cannot be after end date.";
@@ -280,7 +285,9 @@ function escapeCsv(value) {
 }
 
 function exportCsv() {
-    if (telemetryHistory.length === 0) {
+    const dataToExport = filteredHistory !== null ? filteredHistory : telemetryHistory;
+
+    if (dataToExport.length === 0) {
         alert("No telemetry data available to export.");
         return;
     }
@@ -292,7 +299,7 @@ function exportCsv() {
         "Humidity"
     ];
 
-    const rows = telemetryHistory.map((item) => [
+    const rows = dataToExport.map((item) => [
         item.timestamp,
         item.sensorId,
         item.temperature,
@@ -318,13 +325,14 @@ function exportCsv() {
 // =========================
 
 function exportJson() {
-    if (telemetryHistory.length === 0) {
+    const dataToExport = filteredHistory !== null ? filteredHistory : telemetryHistory;
+
+    if (dataToExport.length === 0) {
         alert("No telemetry data available to export.");
         return;
     }
 
-    const jsonContent =
-        JSON.stringify(telemetryHistory, null, 2);
+    const jsonContent = JSON.stringify(dataToExport, null, 2);
 
     downloadFile(
         jsonContent,
@@ -332,7 +340,6 @@ function exportJson() {
         "application/json"
     );
 }
-
 // =========================
 // Download Helper
 // =========================
