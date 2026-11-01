@@ -56,25 +56,64 @@ def generate_telemetry(sensor: dict, tick: int) -> dict:
     }
 
 
-def run_cycle(tick: int, ingest_url: str = BACKEND_INGEST_URL, dry_run: bool = False) -> List[Dict]:
-    """Runs a single simulation tick across all virtual sensors."""
+def validate_payload(payload: dict) -> bool:
+    """Pre-flight client validation enforcing boundary constraints before network transmission."""
+    if not isinstance(payload, dict):
+        return False
+
+    sensor_id = payload.get("sensorId")
+    if not sensor_id or not isinstance(sensor_id, str) or not sensor_id.strip():
+        return False
+
+    temp = payload.get("temperature")
+    if temp is None or not isinstance(temp, (int, float)):
+        return False
+    if not (-50.0 <= temp <= 100.0):
+        return False
+
+    hum = payload.get("humidity")
+    if hum is None or not isinstance(hum, (int, float)):
+        return False
+    if not (0.0 <= hum <= 100.0):
+        return False
+
+    return True
+
+
+def run_cycle(tick: int, ingest_url: str = BACKEND_INGEST_URL, dry_run: bool = False, max_retries: int = 2) -> List[Dict]:
+    """Runs a single simulation tick across all virtual sensors with payload validation and retry logic."""
     emitted = []
     for sensor in SENSORS:
         payload = generate_telemetry(sensor, tick)
+
+        if not validate_payload(payload):
+            logger.error(f"Generated invalid payload for {sensor['id']}: {payload}")
+            continue
+
         emitted.append(payload)
 
         if dry_run:
             logger.info(f"[DRY-RUN] Tick {tick} | {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
             continue
 
-        try:
-            res = requests.post(ingest_url, json=payload, timeout=3)
-            if res.status_code == 201:
-                logger.info(f"Published telemetry: {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
-            else:
-                logger.warning(f"Backend returned HTTP {res.status_code}: {res.text}")
-        except Exception as e:
-            logger.error(f"Failed to publish telemetry to backend: {e}")
+        # Transmit with backoff retry handling
+        success = False
+        for attempt in range(max_retries):
+            try:
+                res = requests.post(ingest_url, json=payload, timeout=3)
+                if res.status_code == 201:
+                    logger.info(f"Published telemetry: {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
+                    success = True
+                    break
+                else:
+                    logger.warning(f"Backend returned HTTP {res.status_code} on attempt {attempt + 1}: {res.text}")
+            except Exception as e:
+                logger.warning(f"Attempt {attempt + 1} failed for {payload['sensorId']}: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(0.5)
+
+        if not success:
+            logger.error(f"Failed to publish telemetry for {payload['sensorId']} after {max_retries} attempts.")
 
     return emitted
 
