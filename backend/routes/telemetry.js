@@ -1,3 +1,4 @@
+
 const express = require("express");
 
 const router = express.Router();
@@ -8,13 +9,15 @@ const {
     getTelemetryForSensor
 } = require("../controllers/telemetryController");
 
-// POST /api/telemetry
+const { authenticateJWT } = require("../middleware/jwtAuth");
+
+// POST /api/telemetry — Sensor ingestion remains public
 router.post("/", receiveTelemetry);
 
-// GET /api/telemetry
-router.get("/", getTelemetry);
+// GET /api/telemetry — Requires JWT
+router.get("/", authenticateJWT, getTelemetry);
 
-// GET /api/telemetry/:sensorId
-router.get("/:sensorId", getTelemetryForSensor);
+// GET /api/telemetry/:sensorId — Requires JWT
+router.get("/:sensorId", authenticateJWT, getTelemetryForSensor);
 
 module.exports = router;

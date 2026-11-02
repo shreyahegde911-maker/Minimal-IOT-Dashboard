@@ -1,21 +1,39 @@
 const request = require("supertest");
+const jwt = require("jsonwebtoken");
 const { app, server } = require("../server");
 const { io } = require("socket.io-client");
+const pool = require("../config/database");
 
 let serverAddress;
+const TEST_JWT_SECRET = "ci-test-jwt-secret-for-authentication";
+let originalJwtSecret;
+
+function generateTestToken(payload = { sub: "test-user", role: "admin" }, secret = TEST_JWT_SECRET, options = {}) {
+    return jwt.sign(payload, secret, {
+        algorithm: "HS256",
+        expiresIn: "1h",
+        ...options
+    });
+}
 
 beforeAll((done) => {
+    originalJwtSecret = process.env.JWT_SECRET;
+    process.env.JWT_SECRET = TEST_JWT_SECRET;
+
     server.listen(0, () => {
         serverAddress = `http://127.0.0.1:${server.address().port}`;
         done();
     });
 });
 
-afterAll((done) => {
-    server.close(done);
+afterAll(async () => {
+    process.env.JWT_SECRET = originalJwtSecret;
+    await new Promise((resolve) => server.close(resolve));
+    await pool.end();
 });
 
 describe("Telemetry API Tests", () => {
+    const validToken = generateTestToken();
 
     // TC-INGEST-01
     test("TC-INGEST-01: should accept valid telemetry data", async () => {
@@ -125,7 +143,9 @@ describe("Telemetry API Tests", () => {
     
     // TC-VAL-05: Invalid telemetry must not be stored
     test("TC-VAL-05: should not store invalid telemetry", async () => {
-        const before = await request(app).get("/api/telemetry");
+        const before = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${validToken}`);
 
         await request(app)
             .post("/api/telemetry")
@@ -136,7 +156,9 @@ describe("Telemetry API Tests", () => {
             })
             .expect(400);
 
-        const after = await request(app).get("/api/telemetry");
+        const after = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${validToken}`);
 
         expect(after.body.count).toBe(before.body.count);
         expect(
@@ -147,7 +169,8 @@ describe("Telemetry API Tests", () => {
     // TC-API-01: Get all telemetry
     test("TC-API-01: should return all telemetry records", async () => {
         const response = await request(app)
-            .get("/api/telemetry");
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${validToken}`);
 
         expect(response.statusCode).toBe(200);
         expect(response.body.success).toBe(true);
@@ -169,7 +192,8 @@ describe("Telemetry API Tests", () => {
             .expect(201);
 
         const response = await request(app)
-            .get(`/api/telemetry/${sensorId}`);
+            .get(`/api/telemetry/${sensorId}`)
+            .set("Authorization", `Bearer ${validToken}`);
 
         expect(response.statusCode).toBe(200);
         expect(response.body.success).toBe(true);
@@ -184,7 +208,8 @@ describe("Telemetry API Tests", () => {
     // TC-API-03: Unknown sensor returns no records
     test("TC-API-03: should return an empty list for an unknown sensor", async () => {
         const response = await request(app)
-            .get("/api/telemetry/UNKNOWN-SENSOR-999");
+            .get("/api/telemetry/UNKNOWN-SENSOR-999")
+            .set("Authorization", `Bearer ${validToken}`);
 
         expect(response.statusCode).toBe(200);
         expect(response.body.success).toBe(true);
@@ -244,7 +269,9 @@ describe("Telemetry API Tests", () => {
 
         socket.disconnect();
 
-        const response = await request(app).get("/api/telemetry");
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${validToken}`);
 
         expect(response.statusCode).toBe(200);
         expect(response.body.success).toBe(true);
@@ -261,4 +288,152 @@ describe("Telemetry API Tests", () => {
         expect(response.body.timestamp).toBeDefined();
     });
 
+});
+
+describe("JWT Authentication Tests (IOT-NFR-021)", () => {
+    // 1. Valid JWT allows access to GET /api/telemetry
+    test("TC-JWT-01: valid JWT allows access to GET /api/telemetry", async () => {
+        const token = generateTestToken();
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(Array.isArray(response.body.data)).toBe(true);
+    });
+
+    // 2. Valid JWT allows access to GET /api/telemetry/:sensorId
+    test("TC-JWT-02: valid JWT allows access to GET /api/telemetry/:sensorId", async () => {
+        const token = generateTestToken();
+        const response = await request(app)
+            .get("/api/telemetry/TEST-001")
+            .set("Authorization", `Bearer ${token}`);
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.success).toBe(true);
+    });
+
+    // 3. Missing token returns 401
+    test("TC-JWT-03: missing Authorization header returns 401", async () => {
+        const response = await request(app)
+            .get("/api/telemetry");
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Authorization header is required");
+    });
+
+    // 4. Invalid token returns 401
+    test("TC-JWT-04: invalid token signature returns 401", async () => {
+        const invalidToken = jwt.sign({ sub: "hacker" }, "wrong-secret-key", { algorithm: "HS256" });
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${invalidToken}`);
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Invalid or expired access token");
+    });
+
+    // 5. Expired token returns 401
+    test("TC-JWT-05: expired token returns 401", async () => {
+        const expiredToken = jwt.sign(
+            { sub: "expired-user" },
+            TEST_JWT_SECRET,
+            { algorithm: "HS256", expiresIn: "-1s" }
+        );
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${expiredToken}`);
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Invalid or expired access token");
+    });
+
+    // 6. Malformed Bearer header returns 401
+    test("TC-JWT-06: malformed Bearer header returns 401", async () => {
+        // Without Bearer prefix
+        const res1 = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Basic somecredentials");
+        expect(res1.statusCode).toBe(401);
+        expect(res1.body.success).toBe(false);
+
+        // Bearer prefix with empty token
+        const res2 = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Bearer ");
+        expect(res2.statusCode).toBe(401);
+        expect(res2.body.success).toBe(false);
+
+        // Bearer with extra parts
+        const res3 = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Bearer part1 part2");
+        expect(res3.statusCode).toBe(401);
+        expect(res3.body.success).toBe(false);
+
+        // Malformed token string
+        const res4 = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Bearer not-a-valid-jwt-token");
+        expect(res4.statusCode).toBe(401);
+        expect(res4.body.success).toBe(false);
+    });
+
+    // 7. Missing JWT_SECRET returns 503
+    test("TC-JWT-07: missing JWT_SECRET returns 503", async () => {
+        const savedSecret = process.env.JWT_SECRET;
+        try {
+            delete process.env.JWT_SECRET;
+            const token = generateTestToken();
+            const response = await request(app)
+                .get("/api/telemetry")
+                .set("Authorization", `Bearer ${token}`);
+
+            expect(response.statusCode).toBe(503);
+            expect(response.body.success).toBe(false);
+            expect(response.body.message).toBe("Authentication service is not configured");
+        } finally {
+            process.env.JWT_SECRET = savedSecret;
+        }
+    });
+
+    // 8. POST /api/telemetry remains accessible without JWT
+    test("TC-JWT-08: POST /api/telemetry remains accessible without JWT", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "TEST-NO-AUTH",
+                temperature: 22.0,
+                humidity: 45.0
+            });
+
+        expect(response.statusCode).toBe(201);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data.sensorId).toBe("TEST-NO-AUTH");
+    });
+
+    // 9. GET /api/health remains accessible without JWT
+    test("TC-JWT-09: GET /api/health remains accessible without JWT", async () => {
+        const response = await request(app)
+            .get("/api/health");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.status).toBe("healthy");
+    });
+
+    // 10. Disallowed signing algorithm is rejected
+    test("TC-JWT-10: reject tokens signed with disallowed algorithm (none)", async () => {
+        const noneAlgToken = jwt.sign({ sub: "admin" }, "", { algorithm: "none" });
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", `Bearer ${noneAlgToken}`);
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Invalid or expired access token");
+    });
 });

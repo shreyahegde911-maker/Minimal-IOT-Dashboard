@@ -52,3 +52,15 @@ cd backend
 npm install
 node server.js
 ```
+
+### Authentication (Member 2 — IOT-NFR-021)
+
+The backend implements JWT authentication for telemetry retrieval APIs (`GET /api/telemetry*`), while keeping ingestion (`POST /api/telemetry`) and health checks (`GET /api/health`) public.
+
+- Configure `JWT_SECRET` in `.env` (refer to `.env.example`).
+- Generate a local development token:
+  ```bash
+  cd backend
+  npm run generate-token
+  ```
+- Detailed documentation, cURL examples, test suites, and architectural notes can be found in **[backend/README.md](backend/README.md)**.

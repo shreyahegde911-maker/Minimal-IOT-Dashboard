@@ -35,6 +35,7 @@ jobs:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: miniot
+      JWT_SECRET: ci-test-jwt-secret-for-authentication
 
     steps:
       - name: Checkout repository
