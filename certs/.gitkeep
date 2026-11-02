@@ -1,0 +1,2 @@
+# Keep certs directory in Git while ignoring private keys and certificates
+

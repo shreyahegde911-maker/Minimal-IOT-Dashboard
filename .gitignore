@@ -7,3 +7,13 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 desktop.ini
+
+# TLS / SSL Certificates & Keys (IOT-NFR-020)
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+certs/*
+!certs/.gitkeep

@@ -52,3 +52,10 @@ cd backend
 npm install
 node server.js
 ```
+
+### Communication Security (IOT-NFR-020 — TLS 1.2+)
+
+In accordance with **IOT-NFR-020**, communication security is enforced through an edge TLS-terminating reverse proxy (Nginx) and trusted-proxy backend integration:
+- Express proxy trust is scoped to trusted container subnets (`loopback, linklocal, uniquelocal`).
+- HSTS (`Strict-Transport-Security`) and defensive headers (`X-Content-Type-Options`, `X-Frame-Options`) are applied to verified HTTPS traffic.
+- See **[backend/README.md](backend/README.md)** for architecture details, certificate management, and Nginx integration.
