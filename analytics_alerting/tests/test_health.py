@@ -45,3 +45,31 @@ def test_health_diagnostic_self_check():
     assert result["checks"]["zscore_configured"] is True
     assert result["checks"]["backend_url_set"] is True
 
+
+def test_health_environment_configuration_defaults():
+    """Verify default runtime configuration settings for container orchestration."""
+    from analytics_alerting.src.config import Config
+    assert Config.Z_SCORE_THRESHOLD >= 2.0
+    assert Config.ROLLING_WINDOW_SIZE >= 30
+    assert Config.TEMP_HIGH_THRESHOLD >= 30.0
+    assert Config.ALERT_COOLDOWN_SECONDS >= 10
+
+
+def test_health_diagnostic_metrics_structure():
+    """Verify multi-sensor window metric calculation in diagnostic reports."""
+    zscore_det = ZScoreAnomalyDetector()
+    ml_det = IsolationForestDetector()
+    runner = HealthDiagnosticRunner(zscore_det, ml_det)
+
+    zscore_det.evaluate_reading("sensor-multi-01", "temperature", 24.0)
+    zscore_det.evaluate_reading("sensor-multi-01", "humidity", 50.0)
+    zscore_det.evaluate_reading("sensor-multi-02", "temperature", 26.5)
+
+    health = runner.get_system_health()
+    engine_metrics = health["analytics_engine"]
+    assert engine_metrics["active_sensors_tracked"] == 2
+    assert engine_metrics["sensor_window_metrics"]["sensor-multi-01"]["temp_window_len"] == 1
+    assert engine_metrics["sensor_window_metrics"]["sensor-multi-01"]["hum_window_len"] == 1
+    assert engine_metrics["sensor_window_metrics"]["sensor-multi-02"]["temp_window_len"] == 1
+
+

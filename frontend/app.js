@@ -1,4 +1,3 @@
-
 // =========================
 // Store Historical Telemetry
 // =========================
@@ -13,7 +12,6 @@ const MAX_HISTORY = 1000;
 const deviceStatistics = {};
 const MAX_STATISTICS_HISTORY = 1000;
 
-
 // =========================
 // Temperature Chart
 // =========================
@@ -25,19 +23,29 @@ const temperatureCtx = document
 const temperatureChart = new Chart(temperatureCtx, {
     type: "line",
     data: {
-        labels: [],
         datasets: []
     },
     options: {
         responsive: true,
+        parsing: false,
         scales: {
+            x: {
+                type: "linear",
+                title: {
+                    display: true,
+                    text: "Time"
+                },
+                ticks: {
+                    callback: (value) =>
+                        new Date(value).toLocaleTimeString()
+                }
+            },
             y: {
                 beginAtZero: false
             }
         }
     }
 });
-
 
 // =========================
 // Humidity Chart
@@ -50,20 +58,33 @@ const humidityCtx = document
 const humidityChart = new Chart(humidityCtx, {
     type: "line",
     data: {
-        labels: [],
         datasets: []
     },
-        
     options: {
         responsive: true,
+        parsing: false,
         scales: {
+            x: {
+                type: "linear",
+                title: {
+                    display: true,
+                    text: "Time"
+                },
+                ticks: {
+                    callback: (value) =>
+                        new Date(value).toLocaleTimeString()
+                }
+            },
             y: {
-                beginAtZero: true
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: "Humidity (%)"
+                }
             }
         }
     }
 });
-
 
 // =========================
 // WebSocket Connection
@@ -76,7 +97,6 @@ const socket = io("http://localhost:3000", {
     reconnectionDelayMax: 30000
 });
 
-
 // =========================
 // DOM Elements
 // =========================
@@ -84,9 +104,9 @@ const socket = io("http://localhost:3000", {
 const connectionStatus =
     document.getElementById("connection-status");
 
-const deviceCards = document.getElementById("device-cards");
+const deviceCards =
+    document.getElementById("device-cards");
 
-// Store the latest readings for each device
 const deviceReadings = new Map();
 
 const telemetryTableBody =
@@ -98,6 +118,9 @@ const exportCsvButton =
 const exportJsonButton =
     document.getElementById("export-json");
 
+// =========================
+// Render Device Cards
+// =========================
 
 function renderDeviceCards() {
     deviceCards.innerHTML = "";
@@ -129,9 +152,14 @@ function renderDeviceCards() {
 
         const temperatureValue = document.createElement("strong");
         temperatureValue.textContent =
-            device.temperature === null ? "-- °C" : `${device.temperature} °C`;
+            device.temperature === null
+                ? "-- °C"
+                : `${device.temperature} °C`;
 
-        temperatureItem.append(temperatureLabel, temperatureValue);
+        temperatureItem.append(
+            temperatureLabel,
+            temperatureValue
+        );
 
         const humidityItem = document.createElement("div");
         humidityItem.className = "telemetry-item";
@@ -141,15 +169,21 @@ function renderDeviceCards() {
 
         const humidityValue = document.createElement("strong");
         humidityValue.textContent =
-            device.humidity === null ? "-- %" : `${device.humidity} %`;
+            device.humidity === null
+                ? "-- %"
+                : `${device.humidity} %`;
 
-        humidityItem.append(humidityLabel, humidityValue);
+        humidityItem.append(
+            humidityLabel,
+            humidityValue
+        );
+
         values.append(temperatureItem, humidityItem);
         card.append(header, values);
+
         deviceCards.appendChild(card);
     });
 }
-
 
 // =========================
 // Historical Log Table
@@ -171,7 +205,6 @@ function addTelemetryRow(telemetry) {
         row.appendChild(cell);
     });
 
-    // Newest reading appears first
     telemetryTableBody.prepend(row);
 }
 
@@ -185,10 +218,19 @@ function renderTelemetryTable(records) {
     });
 }
 
+// =========================
+// Date Filter
+// =========================
+
 function applyDateFilter() {
-    const startValue = document.getElementById("start-date").value;
-    const endValue = document.getElementById("end-date").value;
-    const message = document.getElementById("filter-message");
+    const startValue =
+        document.getElementById("start-date").value;
+
+    const endValue =
+        document.getElementById("end-date").value;
+
+    const message =
+        document.getElementById("filter-message");
 
     if (!startValue && !endValue) {
         message.textContent = "Please select at least a start or end date.";
@@ -196,7 +238,8 @@ function applyDateFilter() {
     }
 
     if (startValue && endValue && startValue > endValue) {
-        message.textContent = "Start date cannot be after end date.";
+        message.textContent =
+            "Start date cannot be after end date.";
         return;
     }
 
@@ -209,20 +252,26 @@ function applyDateFilter() {
         : Infinity;
 
     filteredHistory = telemetryHistory.filter((record) => {
-        const timestamp = new Date(record.timestamp).getTime();
+        const timestamp =
+            new Date(record.timestamp).getTime();
+
         return timestamp >= start && timestamp < end;
     });
 
     renderTelemetryTable(filteredHistory);
-    message.textContent = `${filteredHistory.length} reading(s) found.`;
+
+    message.textContent =
+        `${filteredHistory.length} reading(s) found.`;
 }
 
 function clearDateFilter() {
     document.getElementById("start-date").value = "";
     document.getElementById("end-date").value = "";
+
     document.getElementById("filter-message").textContent = "";
 
     filteredHistory = null;
+
     renderTelemetryTable(telemetryHistory);
 }
 
@@ -259,7 +308,9 @@ function exportCsv() {
 
     const csvContent = [
         headers.map(escapeCsv).join(","),
-        ...rows.map((row) => row.map(escapeCsv).join(","))
+        ...rows.map((row) =>
+            row.map(escapeCsv).join(",")
+        )
     ].join("\r\n");
 
     downloadFile(
@@ -268,7 +319,6 @@ function exportCsv() {
         "text/csv;charset=utf-8;"
     );
 }
-
 
 // =========================
 // JSON Export
@@ -290,14 +340,16 @@ function exportJson() {
         "application/json"
     );
 }
-
-
 // =========================
 // Download Helper
 // =========================
 
 function downloadFile(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
+    const blob = new Blob(
+        [content],
+        { type: mimeType }
+    );
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -311,11 +363,12 @@ function downloadFile(content, filename, mimeType) {
     URL.revokeObjectURL(url);
 }
 
-
+// =========================
 // Connect Export Buttons
+// =========================
+
 exportCsvButton.addEventListener("click", exportCsv);
 exportJsonButton.addEventListener("click", exportJson);
-
 
 // =========================
 // WebSocket Connected
@@ -342,7 +395,7 @@ socket.on("disconnect", () => {
 });
 
 // =========================
-// Update Charts Per Device
+// Device Chart Colors
 // =========================
 
 const deviceChartColors = [
@@ -355,48 +408,48 @@ const deviceChartColors = [
     "#db2777"
 ];
 
-function updateDeviceChart(chart, sensorId, value, timestamp) {
-    const time = new Date(timestamp).toLocaleTimeString();
+// =========================
+// Update Charts Per Device
+// =========================
 
-    // Add a separate line when a new device appears
+function updateDeviceChart(chart, sensorId, value, timestamp) {
+    const time = new Date(timestamp).getTime();
+
     let dataset = chart.data.datasets.find(
         item => item.label === sensorId
     );
 
     if (!dataset) {
-        const color =
-            deviceChartColors[
-                chart.data.datasets.length % deviceChartColors.length
-            ];
+        const color = deviceChartColors[
+            chart.data.datasets.length % deviceChartColors.length
+        ];
 
         dataset = {
             label: sensorId,
-            data: Array(chart.data.labels.length).fill(null),
+            data: [],
             borderColor: color,
             backgroundColor: color,
             borderWidth: 2,
+            pointRadius: 3,
             tension: 0.3,
-            spanGaps: false
+            showLine: true
         };
 
         chart.data.datasets.push(dataset);
     }
 
-    // Keep each device's readings aligned to the same time labels
-    chart.data.labels.push(time);
-
-    chart.data.datasets.forEach(item => {
-        item.data.push(item === dataset ? value : null);
+    dataset.data.push({
+        x: time,
+        y: Number(value)
     });
 
-    // Keep the latest 60 readings
-    if (chart.data.labels.length > 60) {
-        chart.data.labels.shift();
-
-        chart.data.datasets.forEach(item => {
-            item.data.shift();
-        });
+    // Keep only the latest 60 readings per device.
+    if (dataset.data.length > 60) {
+        dataset.data.shift();
     }
+
+    // Keep points in chronological order.
+    dataset.data.sort((a, b) => a.x - b.x);
 
     chart.update();
 }
@@ -408,7 +461,6 @@ function updateDeviceChart(chart, sensorId, value, timestamp) {
 socket.on("telemetry", (data) => {
     console.log("Telemetry received:", data);
 
-    // Use the backend's current field name
     const sensorId = String(data.sensorId ?? "Unknown");
 
     const device = deviceReadings.get(sensorId) ?? {
@@ -428,49 +480,52 @@ socket.on("telemetry", (data) => {
     device.online = true;
     device.lastSeen = Date.now();
 
+    // Clear the previous offline timer.
     if (device.offlineTimer) {
         clearTimeout(device.offlineTimer);
     }
 
+    // Mark device offline after 10 seconds without telemetry.
     device.offlineTimer = setTimeout(() => {
         device.online = false;
         renderDeviceCards();
     }, 10000);
+
     deviceReadings.set(sensorId, device);
 
     renderDeviceCards();
 
-    const time = data.timestamp || new Date().toISOString();
+    const time =
+        data.timestamp || new Date().toISOString();
 
-    // =========================
-// Update Charts Per Device
-// =========================
+    // Update temperature chart.
+    if (data.temperature !== undefined &&
+        Number.isFinite(Number(data.temperature))) {
 
-const chartSensorId = String(data.sensorId ?? "Unknown");
-const timestamp = data.timestamp || new Date().toISOString();
+        updateDeviceChart(
+            temperatureChart,
+            sensorId,
+            data.temperature,
+            time
+        );
+    }
 
-if (data.temperature !== undefined) {
-    updateDeviceChart(
-        temperatureChart,
-        sensorId,
-        data.temperature,
-        timestamp
-    );
-}
+    // Update humidity chart.
+    if (data.humidity !== undefined &&
+        Number.isFinite(Number(data.humidity))) {
 
-if (data.humidity !== undefined) {
-    updateDeviceChart(
-        humidityChart,
-        chartSensorId,
-        data.humidity,
-        timestamp
-    );
-}
+        updateDeviceChart(
+            humidityChart,
+            sensorId,
+            data.humidity,
+            time
+        );
+    }
 
-    // Save and display the historical reading
+    // Save historical reading.
     const record = {
         timestamp: time,
-        sensorId: sensorId ?? "Unknown",
+        sensorId: sensorId,
         temperature: data.temperature ?? "",
         humidity: data.humidity ?? ""
     };
@@ -481,16 +536,24 @@ if (data.humidity !== undefined) {
         telemetryHistory.shift();
     }
 
+    // Update the historical table.
     if (filteredHistory === null) {
-    addTelemetryRow(record);
+        addTelemetryRow(record);
+    } else {
+        applyDateFilter();
+    }
+
+    // Update statistics once for every new reading.
     updateDeviceStatistics(record);
 });
+
 // =========================
 // Device Statistics
 // =========================
 
 function updateDeviceStatistics(telemetry) {
-    const sensorId = String(telemetry.sensorId ?? "Unknown");
+    const sensorId =
+        String(telemetry.sensorId ?? "Unknown");
 
     if (!deviceStatistics[sensorId]) {
         deviceStatistics[sensorId] = {
@@ -501,24 +564,43 @@ function updateDeviceStatistics(telemetry) {
 
     const stats = deviceStatistics[sensorId];
 
-    if (telemetry.temperature !== undefined &&
+    if (
+        telemetry.temperature !== undefined &&
         telemetry.temperature !== null &&
-        telemetry.temperature !== "") {
-        stats.temperature.push(Number(telemetry.temperature));
+        telemetry.temperature !== ""
+    ) {
+        const temperature = Number(telemetry.temperature);
+
+        if (Number.isFinite(temperature)) {
+            stats.temperature.push(temperature);
+        }
     }
 
-    if (telemetry.humidity !== undefined &&
+    if (
+        telemetry.humidity !== undefined &&
         telemetry.humidity !== null &&
-        telemetry.humidity !== "") {
-        stats.humidity.push(Number(telemetry.humidity));
+        telemetry.humidity !== ""
+    ) {
+        const humidity = Number(telemetry.humidity);
+
+        if (Number.isFinite(humidity)) {
+            stats.humidity.push(humidity);
+        }
     }
 
-    // Keep statistics based on the latest 1000 readings per device
-    stats.temperature = stats.temperature.slice(-MAX_STATISTICS_HISTORY);
-    stats.humidity = stats.humidity.slice(-MAX_STATISTICS_HISTORY);
+    // Keep the latest 1000 readings per device.
+    stats.temperature =
+        stats.temperature.slice(-MAX_STATISTICS_HISTORY);
+
+    stats.humidity =
+        stats.humidity.slice(-MAX_STATISTICS_HISTORY);
 
     renderDeviceStatistics();
 }
+
+// =========================
+// Calculate Statistics
+// =========================
 
 function calculateStatistics(values) {
     if (values.length === 0) {
@@ -531,8 +613,11 @@ function calculateStatistics(values) {
 
     const min = Math.min(...values);
     const max = Math.max(...values);
-    const avg = values.reduce((sum, value) => sum + value, 0)
-        / values.length;
+
+    const avg = values.reduce(
+        (sum, value) => sum + value,
+        0
+    ) / values.length;
 
     return {
         min: min.toFixed(2),
@@ -541,47 +626,61 @@ function calculateStatistics(values) {
     };
 }
 
+// =========================
+// Render Device Statistics
+// =========================
+
 function renderDeviceStatistics() {
-    const container = document.getElementById("device-statistics");
+    const container =
+        document.getElementById("device-statistics");
 
     if (!container) return;
 
     container.replaceChildren();
 
-    Object.entries(deviceStatistics).forEach(([sensorId, stats]) => {
-        const temperature = calculateStatistics(stats.temperature);
-        const humidity = calculateStatistics(stats.humidity);
+    Object.entries(deviceStatistics).forEach(
+        ([sensorId, stats]) => {
 
-        const card = document.createElement("div");
-        card.className = "statistics-card";
+            const temperature =
+                calculateStatistics(stats.temperature);
 
-        const title = document.createElement("h3");
-        title.textContent = sensorId;
-        card.appendChild(title);
+            const humidity =
+                calculateStatistics(stats.humidity);
 
-        const details = [
-            ["Temperature Min", `${temperature.min} °C`],
-            ["Temperature Max", `${temperature.max} °C`],
-            ["Temperature Avg", `${temperature.avg} °C`],
-            ["Humidity Min", `${humidity.min} %`],
-            ["Humidity Max", `${humidity.max} %`],
-            ["Humidity Avg", `${humidity.avg} %`]
-        ];
+            const card = document.createElement("div");
+            card.className = "statistics-card";
 
-        details.forEach(([label, value]) => {
-            const item = document.createElement("p");
-            item.textContent = `${label}: ${value}`;
-            card.appendChild(item);
-        });
+            const title = document.createElement("h3");
+            title.textContent = sensorId;
 
-        container.appendChild(card);
-    });
+            card.appendChild(title);
+
+            const details = [
+                ["Temperature Min", `${temperature.min} °C`],
+                ["Temperature Max", `${temperature.max} °C`],
+                ["Temperature Avg", `${temperature.avg} °C`],
+                ["Humidity Min", `${humidity.min} %`],
+                ["Humidity Max", `${humidity.max} %`],
+                ["Humidity Avg", `${humidity.avg} %`]
+            ];
+
+            details.forEach(([label, value]) => {
+                const item = document.createElement("p");
+
+                item.textContent = `${label}: ${value}`;
+
+                card.appendChild(item);
+            });
+
+            container.appendChild(card);
+        }
+    );
 }
-    } 
-    else {
-        applyDateFilter();
-    }
-});
+
+// =========================
+// Date Filter Event Listeners
+// =========================
+
 document
     .getElementById("apply-date-filter")
     .addEventListener("click", applyDateFilter);
