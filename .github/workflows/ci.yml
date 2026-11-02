@@ -35,6 +35,7 @@ jobs:
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: miniot
+      API_TOKEN: ci-test-token-for-github-actions
       JWT_SECRET: ci-test-jwt-secret-for-authentication
 
     steps:

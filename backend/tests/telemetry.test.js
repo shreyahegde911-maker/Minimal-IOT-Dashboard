@@ -2,11 +2,16 @@ const request = require("supertest");
 const jwt = require("jsonwebtoken");
 const { app, server } = require("../server");
 const { io } = require("socket.io-client");
+const { closeSocket } = require("../websocket/socket");
+const { apiLimiter } = require("../middleware/rateLimiter");
 const pool = require("../config/database");
 
-let serverAddress;
+const TEST_API_TOKEN = process.env.API_TOKEN || "ci-test-token-for-github-actions";
 const TEST_JWT_SECRET = "ci-test-jwt-secret-for-authentication";
+
 let originalJwtSecret;
+let originalApiToken;
+let serverAddress;
 
 function generateTestToken(payload = { sub: "test-user", role: "admin" }, secret = TEST_JWT_SECRET, options = {}) {
     return jwt.sign(payload, secret, {
@@ -16,9 +21,19 @@ function generateTestToken(payload = { sub: "test-user", role: "admin" }, secret
     });
 }
 
+const apiTokenRequest = () => ({
+    get: (url) => request(app).get(url)
+        .set("Authorization", `Bearer ${TEST_API_TOKEN}`),
+
+    post: (url) => request(app).post(url)
+        .set("Authorization", `Bearer ${TEST_API_TOKEN}`)
+});
+
 beforeAll((done) => {
     originalJwtSecret = process.env.JWT_SECRET;
+    originalApiToken = process.env.API_TOKEN;
     process.env.JWT_SECRET = TEST_JWT_SECRET;
+    process.env.API_TOKEN = TEST_API_TOKEN;
 
     server.listen(0, () => {
         serverAddress = `http://127.0.0.1:${server.address().port}`;
@@ -26,9 +41,26 @@ beforeAll((done) => {
     });
 });
 
+afterEach(async () => {
+    if (apiLimiter && typeof apiLimiter.resetKey === "function") {
+        await apiLimiter.resetKey("127.0.0.1");
+        await apiLimiter.resetKey("::ffff:127.0.0.1");
+        await apiLimiter.resetKey("::1");
+    }
+});
+
 afterAll(async () => {
     process.env.JWT_SECRET = originalJwtSecret;
-    await new Promise((resolve) => server.close(resolve));
+    process.env.API_TOKEN = originalApiToken;
+
+    await new Promise((resolve) => {
+        closeSocket(resolve);
+    });
+
+    await new Promise((resolve) => {
+        server.close(resolve);
+    });
+
     await pool.end();
 });
 
@@ -38,7 +70,7 @@ describe("Telemetry API Tests", () => {
     // TC-INGEST-01
     test("TC-INGEST-01: should accept valid telemetry data", async () => {
 
-        const response = await request(app)
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-001",
@@ -60,7 +92,7 @@ describe("Telemetry API Tests", () => {
     // TC-INGEST-02
     test("TC-INGEST-02: should reject out-of-range temperature", async () => {
 
-        const response = await request(app)
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-002",
@@ -79,7 +111,7 @@ describe("Telemetry API Tests", () => {
     
     // TC-VAL-01: Reject missing required fields
     test("TC-VAL-01: should reject telemetry with missing fields", async () => {
-        const response = await request(app)
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-003",
@@ -94,7 +126,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-VAL-02: Reject empty sensor ID
     test("TC-VAL-02: should reject an empty sensor ID", async () => {
-        const response = await request(app)
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "   ",
@@ -110,7 +142,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-VAL-03: Reject non-numeric temperature
     test("TC-VAL-03: should reject non-numeric temperature", async () => {
-        const response = await request(app)
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-004",
@@ -126,7 +158,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-VAL-04: Reject out-of-range humidity
     test("TC-VAL-04: should reject out-of-range humidity", async () => {
-        const response = await request(app)
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-005",
@@ -147,7 +179,7 @@ describe("Telemetry API Tests", () => {
             .get("/api/telemetry")
             .set("Authorization", `Bearer ${validToken}`);
 
-        await request(app)
+        await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "INVALID-TEST",
@@ -182,7 +214,7 @@ describe("Telemetry API Tests", () => {
     test("TC-API-02: should return telemetry for the requested sensor", async () => {
         const sensorId = "API-TEST-SENSOR";
 
-        await request(app)
+        await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId,
@@ -239,7 +271,7 @@ describe("Telemetry API Tests", () => {
             socket.on("connect_error", reject);
         });
 
-        await request(app)
+        await apiTokenRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-WS-001",
@@ -288,6 +320,52 @@ describe("Telemetry API Tests", () => {
         expect(response.body.timestamp).toBeDefined();
     });
 
+    // TC-SEC-01: Reject requests without an API token
+    test("TC-SEC-01: should reject requests without an API token", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "TEST-NO-TOKEN",
+                temperature: 24.5,
+                humidity: 55
+            });
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
+    // TC-SEC-02: Reject requests with an invalid API token
+    test("TC-SEC-02: should reject requests with an invalid API token", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .set("Authorization", "Bearer invalid-token")
+            .send({
+                sensorId: "TEST-BAD-TOKEN",
+                temperature: 24.5,
+                humidity: 55
+            });
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
+    // TC-SEC-03: Rate limiting
+    test("TC-SEC-03: should reject requests after exceeding the rate limit", async () => {
+        let response;
+
+        for (let i = 0; i < 110; i++) {
+            response = await request(app)
+                .get("/api/telemetry")
+                .set("Authorization", `Bearer ${validToken}`);
+
+            if (response.statusCode === 429) {
+                break;
+            }
+        }
+
+        expect(response.statusCode).toBe(429);
+        expect(response.body.success).toBe(false);
+    });
 });
 
 describe("JWT Authentication Tests (IOT-NFR-021)", () => {
@@ -401,19 +479,19 @@ describe("JWT Authentication Tests (IOT-NFR-021)", () => {
         }
     });
 
-    // 8. POST /api/telemetry remains accessible without JWT
-    test("TC-JWT-08: POST /api/telemetry remains accessible without JWT", async () => {
-        const response = await request(app)
+    // 8. POST /api/telemetry remains accessible without JWT (uses API token)
+    test("TC-JWT-08: POST /api/telemetry remains accessible without JWT (uses API token)", async () => {
+        const response = await apiTokenRequest()
             .post("/api/telemetry")
             .send({
-                sensorId: "TEST-NO-AUTH",
+                sensorId: "TEST-NO-JWT",
                 temperature: 22.0,
                 humidity: 45.0
             });
 
         expect(response.statusCode).toBe(201);
         expect(response.body.success).toBe(true);
-        expect(response.body.data.sensorId).toBe("TEST-NO-AUTH");
+        expect(response.body.data.sensorId).toBe("TEST-NO-JWT");
     });
 
     // 9. GET /api/health remains accessible without JWT

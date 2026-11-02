@@ -1,6 +1,7 @@
 const path = require("path");
 require("dotenv").config({
-    path: path.resolve(__dirname, "../.env")
+    path: path.resolve(__dirname, "../.env"),
+    quiet: true
 });
 
 const express = require("express");
@@ -17,6 +18,7 @@ app.use(express.json());
 
 // Import routes
 const telemetryRoutes = require("./routes/telemetry");
+const { apiLimiter } = require("./middleware/rateLimiter");
 
 // Import WebSocket
 const { initializeSocket } = require("./websocket/socket");
@@ -40,8 +42,8 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-// Telemetry API
-app.use("/api/telemetry", telemetryRoutes);
+// Telemetry API with rate limiting
+app.use("/api/telemetry", apiLimiter, telemetryRoutes);
 
 // Start server
 if (require.main === module) {
