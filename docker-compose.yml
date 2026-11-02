@@ -60,6 +60,11 @@ services:
       - BACKEND_INGEST_URL=http://backend:3000/api/telemetry
       - SIMULATION_INTERVAL_SEC=3
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://backend:3000/api/health\", timeout=2)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
 
   # Analytics, Anomaly Engine & Alert Worker (Member 4)
   analytics-alerting:
