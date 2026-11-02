@@ -1,6 +1,18 @@
 const request = require("supertest");
 const { app, server } = require("../server");
 const { io } = require("socket.io-client");
+const { closeSocket } = require("../websocket/socket");
+const pool = require("../config/database");
+
+const API_TOKEN = process.env.API_TOKEN;
+
+const authenticatedRequest = () => ({
+    get: (url) => request(app).get(url)
+        .set("Authorization", `Bearer ${API_TOKEN}`),
+
+    post: (url) => request(app).post(url)
+        .set("Authorization", `Bearer ${API_TOKEN}`)
+});
 
 let serverAddress;
 
@@ -11,8 +23,12 @@ beforeAll((done) => {
     });
 });
 
-afterAll((done) => {
-    server.close(done);
+afterAll(async () => {
+    await new Promise((resolve) => {
+        closeSocket(resolve);
+    });
+
+    await pool.end();
 });
 
 describe("Telemetry API Tests", () => {
@@ -20,7 +36,7 @@ describe("Telemetry API Tests", () => {
     // TC-INGEST-01
     test("TC-INGEST-01: should accept valid telemetry data", async () => {
 
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-001",
@@ -42,7 +58,7 @@ describe("Telemetry API Tests", () => {
     // TC-INGEST-02
     test("TC-INGEST-02: should reject out-of-range temperature", async () => {
 
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-002",
@@ -61,7 +77,7 @@ describe("Telemetry API Tests", () => {
     
     // TC-VAL-01: Reject missing required fields
     test("TC-VAL-01: should reject telemetry with missing fields", async () => {
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-003",
@@ -76,7 +92,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-VAL-02: Reject empty sensor ID
     test("TC-VAL-02: should reject an empty sensor ID", async () => {
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "   ",
@@ -92,7 +108,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-VAL-03: Reject non-numeric temperature
     test("TC-VAL-03: should reject non-numeric temperature", async () => {
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-004",
@@ -108,7 +124,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-VAL-04: Reject out-of-range humidity
     test("TC-VAL-04: should reject out-of-range humidity", async () => {
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-005",
@@ -125,9 +141,9 @@ describe("Telemetry API Tests", () => {
     
     // TC-VAL-05: Invalid telemetry must not be stored
     test("TC-VAL-05: should not store invalid telemetry", async () => {
-        const before = await request(app).get("/api/telemetry");
+        const before = await authenticatedRequest().get("/api/telemetry");
 
-        await request(app)
+        await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "INVALID-TEST",
@@ -136,7 +152,7 @@ describe("Telemetry API Tests", () => {
             })
             .expect(400);
 
-        const after = await request(app).get("/api/telemetry");
+        const after = await authenticatedRequest().get("/api/telemetry");
 
         expect(after.body.count).toBe(before.body.count);
         expect(
@@ -146,7 +162,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-API-01: Get all telemetry
     test("TC-API-01: should return all telemetry records", async () => {
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .get("/api/telemetry");
 
         expect(response.statusCode).toBe(200);
@@ -159,7 +175,7 @@ describe("Telemetry API Tests", () => {
     test("TC-API-02: should return telemetry for the requested sensor", async () => {
         const sensorId = "API-TEST-SENSOR";
 
-        await request(app)
+        await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId,
@@ -168,7 +184,7 @@ describe("Telemetry API Tests", () => {
             })
             .expect(201);
 
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .get(`/api/telemetry/${sensorId}`);
 
         expect(response.statusCode).toBe(200);
@@ -183,7 +199,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-API-03: Unknown sensor returns no records
     test("TC-API-03: should return an empty list for an unknown sensor", async () => {
-        const response = await request(app)
+        const response = await authenticatedRequest()
             .get("/api/telemetry/UNKNOWN-SENSOR-999");
 
         expect(response.statusCode).toBe(200);
@@ -214,7 +230,7 @@ describe("Telemetry API Tests", () => {
             socket.on("connect_error", reject);
         });
 
-        await request(app)
+        await authenticatedRequest()
             .post("/api/telemetry")
             .send({
                 sensorId: "TEST-WS-001",
@@ -244,7 +260,7 @@ describe("Telemetry API Tests", () => {
 
         socket.disconnect();
 
-        const response = await request(app).get("/api/telemetry");
+        const response = await authenticatedRequest().get("/api/telemetry");
 
         expect(response.statusCode).toBe(200);
         expect(response.body.success).toBe(true);
@@ -252,7 +268,7 @@ describe("Telemetry API Tests", () => {
 
     // TC-HEALTH-01: Health check endpoint returns status and uptime diagnostics
     test("TC-HEALTH-01: should return system health status and uptime", async () => {
-        const response = await request(app).get("/api/health");
+        const response = await authenticatedRequest().get("/api/health");
 
         expect(response.statusCode).toBe(200);
         expect(response.body.status).toBe("healthy");
@@ -260,5 +276,38 @@ describe("Telemetry API Tests", () => {
         expect(response.body.uptime).toBeGreaterThanOrEqual(0);
         expect(response.body.timestamp).toBeDefined();
     });
+    // TC-SEC-01: Reject requests without an API token
+    test("TC-SEC-01: should reject requests without an API token", async () => {
+        const response = await request(app)
+            .get("/api/telemetry");
 
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
+    // TC-SEC-02: Reject requests with an invalid API token
+    test("TC-SEC-02: should reject requests with an invalid API token", async () => {
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Bearer invalid-token");
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
+    // TC-SEC-03: Rate limiting
+    test("TC-SEC-03: should reject requests after exceeding the rate limit", async () => {
+        let response;
+
+        for (let i = 0; i < 110; i++) {
+            response = await request(app).get("/api/telemetry");
+
+            if (response.statusCode === 429) {
+                break;
+            }
+        }
+
+        expect(response.statusCode).toBe(429);
+        expect(response.body.success).toBe(false);
+    });
 });

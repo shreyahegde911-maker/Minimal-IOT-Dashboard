@@ -34,8 +34,16 @@ function broadcastTelemetry(telemetry) {
 
 }
 
+function closeSocket(callback) {
+    if (io) {
+        io.close(callback);
+    } else if (callback) {
+        callback();
+    }
+}
 
 module.exports = {
     initializeSocket,
-    broadcastTelemetry
+    broadcastTelemetry,
+    closeSocket
 };

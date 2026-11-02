@@ -1,3 +1,8 @@
+require("dotenv").config({
+    path: require("path").resolve(__dirname, "../.env"),
+    quiet: true
+});
+
 const express = require("express");
 const http = require("http");
 
@@ -12,6 +17,8 @@ app.use(express.json());
 
 // Import routes
 const telemetryRoutes = require("./routes/telemetry");
+const { apiLimiter } = require("./middleware/rateLimiter");
+const { apiTokenAuth } = require("./middleware/apiTokenAuth");
 
 // Import WebSocket
 const { initializeSocket } = require("./websocket/socket");
@@ -36,7 +43,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Telemetry API
-app.use("/api/telemetry", telemetryRoutes);
+app.use("/api/telemetry", apiLimiter, apiTokenAuth, telemetryRoutes);
 
 // Start server
 if (require.main === module) {
