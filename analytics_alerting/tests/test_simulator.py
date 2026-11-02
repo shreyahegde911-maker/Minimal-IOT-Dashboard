@@ -34,3 +34,85 @@ def test_simulator_anomaly_injection():
     # Tick 26 should return to normal curve range
     normal_payload = generate_telemetry(sensor, tick=26)
     assert normal_payload["temperature"] < 35.0
+
+
+def test_simulator_freeze_anomaly():
+    """Verify that freeze anomaly (-5.0°C) triggers on tick 50 for sensor-02."""
+    sensor = SENSORS[1]  # sensor-02
+    anomaly_payload = generate_telemetry(sensor, tick=50)
+    assert anomaly_payload["temperature"] == -5.0
+
+
+def test_simulator_humidity_drop_anomaly():
+    """Verify that severe humidity drop (10.0%) triggers on tick 75 for sensor-03."""
+    sensor = SENSORS[2]  # sensor-03
+    anomaly_payload = generate_telemetry(sensor, tick=75)
+    assert anomaly_payload["humidity"] == 10.0
+
+
+def test_simulator_run_cycle_dry_run():
+    """Verify that run_cycle executes across all configured sensors in dry_run mode."""
+    from simulator.simulator import run_cycle
+    payloads = run_cycle(tick=1, dry_run=True)
+    assert len(payloads) == len(SENSORS)
+    for p in payloads:
+        assert "sensorId" in p
+        assert "temperature" in p
+        assert "humidity" in p
+
+
+def test_validate_payload_valid():
+    """Verify that well-formed telemetry passes pre-flight validation."""
+    from simulator.simulator import validate_payload
+    valid_payload = {"sensorId": "sensor-01", "temperature": 23.4, "humidity": 55.0}
+    assert validate_payload(valid_payload) is True
+
+
+def test_validate_payload_invalid_structure():
+    """Verify that missing fields or incorrect types are rejected."""
+    from simulator.simulator import validate_payload
+    assert validate_payload({}) is False
+    assert validate_payload("string") is False
+    assert validate_payload({"sensorId": "", "temperature": 20.0, "humidity": 50.0}) is False
+    assert validate_payload({"sensorId": "sensor-01", "temperature": "hot", "humidity": 50.0}) is False
+    assert validate_payload({"sensorId": "sensor-01", "temperature": 20.0, "humidity": None}) is False
+
+
+def test_validate_payload_out_of_bounds():
+    """Verify that values outside physical sensor thresholds are rejected."""
+    from simulator.simulator import validate_payload
+    assert validate_payload({"sensorId": "sensor-01", "temperature": -100.0, "humidity": 50.0}) is False
+    assert validate_payload({"sensorId": "sensor-01", "temperature": 150.0, "humidity": 50.0}) is False
+    assert validate_payload({"sensorId": "sensor-01", "temperature": 25.0, "humidity": -1.0}) is False
+    assert validate_payload({"sensorId": "sensor-01", "temperature": 25.0, "humidity": 105.0}) is False
+
+
+def test_simulator_recovery_after_anomaly():
+    """Verify that sensor readings immediately recover to normal baseline range on the subsequent tick."""
+    # sensor-01 recovers after tick 25
+    assert generate_telemetry(SENSORS[0], tick=25)["temperature"] == 42.5
+    assert generate_telemetry(SENSORS[0], tick=26)["temperature"] < 35.0
+
+    # sensor-02 recovers after tick 50
+    assert generate_telemetry(SENSORS[1], tick=50)["temperature"] == -5.0
+    assert generate_telemetry(SENSORS[1], tick=51)["temperature"] > 15.0
+
+    # sensor-03 recovers after tick 75
+    assert generate_telemetry(SENSORS[2], tick=75)["humidity"] == 10.0
+    assert generate_telemetry(SENSORS[2], tick=76)["humidity"] > 40.0
+
+
+def test_simulator_multi_device_distribution():
+    """Verify that virtual sensors retain independent base temperature and humidity baselines."""
+    p1 = generate_telemetry(SENSORS[0], tick=10)
+    p2 = generate_telemetry(SENSORS[1], tick=10)
+    p3 = generate_telemetry(SENSORS[2], tick=10)
+
+    assert p1["sensorId"] == "sensor-01"
+    assert p2["sensorId"] == "sensor-02"
+    assert p3["sensorId"] == "sensor-03"
+
+    # sensor-02 runs hotter than sensor-03 on the diurnal curve
+    assert p2["temperature"] > p3["temperature"]
+
+
