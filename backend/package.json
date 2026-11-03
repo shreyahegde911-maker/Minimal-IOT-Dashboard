@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "generate-token": "node scripts/generateToken.js"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +14,7 @@
     "dotenv": "^18.0.9",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.2",
+    "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1",
     "socket.io": "^4.8.3"
   },

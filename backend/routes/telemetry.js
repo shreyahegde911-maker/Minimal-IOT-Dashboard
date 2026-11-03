@@ -8,13 +8,16 @@ const {
     getTelemetryForSensor
 } = require("../controllers/telemetryController");
 
-// POST /api/telemetry
-router.post("/", receiveTelemetry);
+const { apiTokenAuth } = require("../middleware/apiTokenAuth");
+const { authenticateJWT } = require("../middleware/jwtAuth");
 
-// GET /api/telemetry
-router.get("/", getTelemetry);
+// POST /api/telemetry — Requires API token (Sensor Ingestion)
+router.post("/", apiTokenAuth, receiveTelemetry);
 
-// GET /api/telemetry/:sensorId
-router.get("/:sensorId", getTelemetryForSensor);
+// GET /api/telemetry — Requires JWT (Telemetry Retrieval)
+router.get("/", authenticateJWT, getTelemetry);
+
+// GET /api/telemetry/:sensorId — Requires JWT (Sensor-Specific Retrieval)
+router.get("/:sensorId", authenticateJWT, getTelemetryForSensor);
 
 module.exports = router;
