@@ -22,14 +22,12 @@ const fs = require("fs");
 // Load .env from root or local backend
 const rootEnvPath = path.resolve(__dirname, "../../.env");
 const localEnvPath = path.resolve(__dirname, "../.env");
+const envPath = fs.existsSync(rootEnvPath) ? rootEnvPath : localEnvPath;
 
-if (fs.existsSync(rootEnvPath)) {
-    require("dotenv").config({ path: rootEnvPath });
-} else if (fs.existsSync(localEnvPath)) {
-    require("dotenv").config({ path: localEnvPath });
-} else {
-    require("dotenv").config();
-}
+require("dotenv").config({
+    path: envPath,
+    quiet: true
+});
 
 const jwt = require("jsonwebtoken");
 

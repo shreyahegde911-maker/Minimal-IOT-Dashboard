@@ -514,4 +514,24 @@ describe("JWT Authentication Tests (IOT-NFR-021)", () => {
         expect(response.body.success).toBe(false);
         expect(response.body.message).toBe("Invalid or expired access token");
     });
+    // 11. GET with API token but without JWT returns 401
+    test("TC-JWT-11: GET with API token but without JWT returns 401", async () => {
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Bearer " + TEST_API_TOKEN);
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Invalid or expired access token");
+    });
+
+    // 12. GET for a specific sensor without JWT returns 401
+    test("TC-JWT-12: GET for a specific sensor without JWT returns 401", async () => {
+        const response = await request(app)
+            .get("/api/telemetry/TEST-001");
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toBe("Authorization header is required");
+    });
 });
