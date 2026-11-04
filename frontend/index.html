@@ -117,7 +117,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Socket.IO Client -->
-<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    if (typeof io === "undefined") {
+        document.write('<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"><\/script>');
+    }
+</script>
 
 <!-- Our Dashboard JavaScript -->
 <script src="app.js"></script>

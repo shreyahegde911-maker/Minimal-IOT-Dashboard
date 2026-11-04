@@ -90,7 +90,11 @@ const humidityChart = new Chart(humidityCtx, {
 // WebSocket Connection
 // =========================
 
-const socket = io("http://localhost:3000", {
+const socketUrl = window.location.protocol.startsWith("http")
+    ? undefined
+    : "http://localhost:3001";
+
+const socket = io(socketUrl, {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,

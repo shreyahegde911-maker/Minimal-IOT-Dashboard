@@ -12,6 +12,7 @@ logger = logging.getLogger("TelemetrySimulator")
 
 BACKEND_INGEST_URL = os.getenv("BACKEND_INGEST_URL", "http://localhost:3000/api/telemetry")
 SIMULATION_INTERVAL_SEC = int(os.getenv("SIMULATION_INTERVAL_SEC", "3"))
+API_TOKEN = os.getenv("API_TOKEN", "miniot-dev-token")
 
 SENSORS = [
     {"id": "sensor-01", "base_temp": 22.0, "base_hum": 55.0},
@@ -97,10 +98,14 @@ def run_cycle(tick: int, ingest_url: str = BACKEND_INGEST_URL, dry_run: bool = F
             continue
 
         # Transmit with backoff retry handling
+        headers = {"Content-Type": "application/json"}
+        if API_TOKEN:
+            headers["Authorization"] = f"Bearer {API_TOKEN}"
+
         success = False
         for attempt in range(max_retries):
             try:
-                res = requests.post(ingest_url, json=payload, timeout=3)
+                res = requests.post(ingest_url, json=payload, headers=headers, timeout=3)
                 if res.status_code == 201:
                     logger.info(f"Published telemetry: {payload['sensorId']} -> Temp: {payload['temperature']}°C, Hum: {payload['humidity']}%")
                     success = True
