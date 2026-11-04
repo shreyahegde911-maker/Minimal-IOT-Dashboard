@@ -20,6 +20,10 @@ def db_connection():
             connect_timeout=5,
             autocommit=True,
         )
+        with conn.cursor() as cur:
+            cur.execute("SELECT count(*) FROM pg_extension WHERE extname = 'timescaledb'")
+            if cur.fetchone()[0] == 0:
+                pytest.skip("TimescaleDB extension is not installed on this database instance")
     except psycopg.Error as exc:
         pytest.fail(f"Could not connect to the test database: {exc}")
 

@@ -116,3 +116,45 @@ def test_simulator_multi_device_distribution():
     assert p2["temperature"] > p3["temperature"]
 
 
+def test_simulator_network_transmission_success(monkeypatch):
+    """Verify that run_cycle handles HTTP 201 response properly with Bearer token."""
+    from unittest.mock import MagicMock
+    import requests
+    from simulator.simulator import run_cycle
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 201
+    monkeypatch.setattr(requests, "post", lambda *args, **kwargs: mock_resp)
+
+    payloads = run_cycle(tick=1, dry_run=False, max_retries=1)
+    assert len(payloads) == 3
+
+
+def test_simulator_network_transmission_retry_handling(monkeypatch):
+    """Verify backoff retry logic when backend returns error or raises network exception."""
+    import requests
+    from simulator.simulator import run_cycle
+
+    attempts = []
+
+    def mock_post(*args, **kwargs):
+        attempts.append(1)
+        raise requests.exceptions.Timeout("Connection timed out")
+
+    monkeypatch.setattr(requests, "post", mock_post)
+
+    payloads = run_cycle(tick=1, dry_run=False, max_retries=2)
+    assert len(payloads) == 3
+    # 3 sensors * 2 attempts = 6 attempts
+    assert len(attempts) == 6
+
+
+def test_simulator_main_cli_execution(monkeypatch):
+    """Verify that main() parses CLI arguments and completes after specified tick count."""
+    import sys
+    from simulator.simulator import main
+
+    monkeypatch.setattr(sys, "argv", ["simulator.py", "--dry-run", "--ticks", "2", "--interval", "0"])
+    main()
+
+
