@@ -1,126 +1,314 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Minimal IoT Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-    <header class="dashboard-header">
+<aside class="sidebar">
+    <a class="brand" href="#top">
+        <span class="brand-mark">⌁</span>
+        <span>
+            <strong>Minimal <em>IoT</em></strong>
+            <small>TEMP &amp; HUMIDITY</small>
+        </span>
+    </a>
+
+    <nav class="navigation">
+        <a class="nav-link active" href="#device-status"><span>▦</span>Device Status</a>
+        <a class="nav-link" href="#per-device-stats"><span>▥</span>Per-Device Statistics</a>
+        <a class="nav-link" href="#live-telemetry"><span>⌁</span>Live Telemetry</a>
+        <a class="nav-link" href="#historical-data"><span>◷</span>Historical Data</a>
+        <a class="nav-link" href="#export-data"><span>⇩</span>Export Data</a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <span class="status-dot"></span>
+        Dashboard interface
+    </div>
+</aside>
+
+<div class="main-shell" id="top">
+
+    <header class="topbar">
         <div>
             <h1>Minimal IoT Dashboard</h1>
-            <p>Temperature & Humidity Monitoring</p>
+            <p>Temperature &amp; Humidity Monitoring</p>
         </div>
-
-        <div id="connection-status" class="status disconnected">
-            ● Disconnected
-        </div>
+        <div id="connection-status" class="status disconnected">● Disconnected</div>
     </header>
-
 
     <main class="dashboard-container">
 
-        <!-- Device Status -->
-        <section class="device-section">
+        <section class="welcome-row">
+            <div>
+                <p class="eyebrow">MONITORING OVERVIEW</p>
+                <h2>Your devices, at a glance.</h2>
+                <p class="section-subtitle">Live temperature and humidity readings from connected devices.</p>
+            </div>
+            <div class="live-label"><span class="live-dot"></span> Live telemetry</div>
+        </section>
 
-            <h2>Device Status</h2>
+        <!-- DEVICE STATUS -->
+        <section class="panel-section" id="device-status">
+            <div class="section-heading">
+                <div>
+                    <h2>Device Status</h2>
+                    <p>Current telemetry and connection status per registered device</p>
+                </div>
+                <span class="section-icon amber">▦</span>
+            </div>
 
             <div id="device-cards" class="device-cards">
-                <!-- Device cards will be created dynamically -->
+                <div class="empty-state">Waiting for device telemetry...</div>
             </div>
+        </section>
 
-                </section>
-
-        <!-- Per-Device Statistics -->
-        <section class="statistics-section">
-            <h2>Per-Device Statistics</h2>
+        <!-- PER DEVICE STATISTICS -->
+        <section class="panel-section" id="per-device-stats">
+            <div class="section-heading">
+                <div>
+                    <h2>Per-Device Statistics</h2>
+                    <p>Minimum, maximum and average temperature and humidity readings</p>
+                </div>
+                <span class="section-icon violet">▥</span>
+            </div>
 
             <div id="device-statistics" class="device-statistics">
-                <!-- Statistics cards will be created dynamically -->
+                <div class="empty-state">Statistics will appear after readings arrive.</div>
             </div>
         </section>
 
-        <!-- Live Charts -->
-        <section class="charts-section">
-
-            <h2>Live Telemetry</h2>
-
-            <div class="chart-card">
-                <h3>Temperature</h3>
-                <canvas id="temperature-chart"></canvas>
+        <!-- LIVE TELEMETRY -->
+        <section class="panel-section" id="live-telemetry">
+            <div class="section-heading">
+                <div>
+                    <h2>Live Telemetry</h2>
+                    <p>Real-time readings plotted over time for each device</p>
+                </div>
+                <span class="section-icon cyan">⌁</span>
             </div>
 
-            <div class="chart-card">
-                <h3>Humidity</h3>
-                <canvas id="humidity-chart"></canvas>
-            </div>
+            <div class="charts-section">
+                <article class="chart-card">
+                    <div class="chart-heading">
+                        <div>
+                            <h3>Temperature Chart</h3>
+                            <p>Live temperature readings (°C)</p>
+                        </div>
+                        <span class="chart-tag purple">Temperature · °C</span>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="temperature-chart"></canvas>
+                    </div>
+                </article>
 
+                <article class="chart-card">
+                    <div class="chart-heading">
+                        <div>
+                            <h3>Humidity Chart</h3>
+                            <p>Live relative humidity readings (%)</p>
+                        </div>
+                        <span class="chart-tag blue">Humidity · %</span>
+                    </div>
+                    <div class="chart-wrap">
+                        <canvas id="humidity-chart"></canvas>
+                    </div>
+                </article>
+            </div>
         </section>
 
+        <!-- HISTORICAL DATA -->
+        <section class="panel-section history-panel" id="historical-data">
 
-        <!-- Historical Logs -->
-        <section class="history-section">
-
-            <h2>Historical Logs</h2>
-            
-            <div class="date-filter">
-                <label for="start-date">Start Date:</label>
-                <input type="date" id="start-date">
-
-                <label for="end-date">End Date:</label>
-                <input type="date" id="end-date">
-
-                <button id="apply-date-filter">Apply Filter</button>
-                <button id="clear-date-filter">Clear Filter</button>
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">HISTORICAL ANALYTICS</p>
+                    <h2>Historical Sensor Readings</h2>
+                    <p>View, filter and analyse past temperature and humidity data.</p>
+                </div>
+                <span class="section-icon coral">◷</span>
             </div>
 
-            <p id="filter-message" role="status"></p>
+            <!-- SIX HISTORICAL STATISTICS -->
+            <div class="historical-summary">
 
+                <article class="history-stat-card temp-stat">
+                    <div class="history-stat-icon">🌡️</div>
+                    <div class="history-stat-title">Temperature Minimum</div>
+                    <div class="history-stat-value" id="history-temp-min">-- °C</div>
+                    <div class="history-stat-caption">Lowest recorded temperature</div>
+                </article>
 
-            <div class="export-buttons">
-                <button id="export-csv">Export CSV</button>
-                <button id="export-json">Export JSON</button>
+                <article class="history-stat-card temp-stat">
+                    <div class="history-stat-icon">🔥</div>
+                    <div class="history-stat-title">Temperature Maximum</div>
+                    <div class="history-stat-value" id="history-temp-max">-- °C</div>
+                    <div class="history-stat-caption">Highest recorded temperature</div>
+                </article>
+
+                <article class="history-stat-card temp-stat">
+                    <div class="history-stat-icon">📊</div>
+                    <div class="history-stat-title">Temperature Average</div>
+                    <div class="history-stat-value" id="history-temp-avg">-- °C</div>
+                    <div class="history-stat-caption">Average recorded temperature</div>
+                </article>
+
+                <article class="history-stat-card humidity-stat">
+                    <div class="history-stat-icon">💧</div>
+                    <div class="history-stat-title">Humidity Minimum</div>
+                    <div class="history-stat-value" id="history-humidity-min">-- %</div>
+                    <div class="history-stat-caption">Lowest recorded humidity</div>
+                </article>
+
+                <article class="history-stat-card humidity-stat">
+                    <div class="history-stat-icon">💦</div>
+                    <div class="history-stat-title">Humidity Maximum</div>
+                    <div class="history-stat-value" id="history-humidity-max">-- %</div>
+                    <div class="history-stat-caption">Highest recorded humidity</div>
+                </article>
+
+                <article class="history-stat-card humidity-stat">
+                    <div class="history-stat-icon">📈</div>
+                    <div class="history-stat-title">Humidity Average</div>
+                    <div class="history-stat-value" id="history-humidity-avg">-- %</div>
+                    <div class="history-stat-caption">Average recorded humidity</div>
+                </article>
+
             </div>
 
+            <!-- HISTORICAL TREND GRAPH -->
+            <article class="historical-chart-card">
+                <div class="chart-heading">
+                    <div>
+                        <h3>Temperature &amp; Humidity Trend</h3>
+                        <p>Historical readings across the selected date range</p>
+                    </div>
+                    <div class="chart-legends">
+                        <span><i class="legend-dot temperature-dot"></i> Temperature (°C)</span>
+                        <span><i class="legend-dot humidity-dot"></i> Humidity (%)</span>
+                    </div>
+                </div>
+
+                <div class="historical-chart-wrap">
+                    <canvas id="historical-chart"></canvas>
+                </div>
+                <p class="chart-note">Temperature and humidity use separate vertical scales for clear comparison.</p>
+            </article>
+
+            <!-- FILTERS -->
+            <div class="table-toolbar">
+                <div class="filter-title">⌕ Filter Historical Data</div>
+
+                <div class="date-filter">
+                    <div class="filter-field">
+                        <label for="start-date">From</label>
+                        <input type="date" id="start-date">
+                    </div>
+
+                    <div class="filter-field">
+                        <label for="end-date">To</label>
+                        <input type="date" id="end-date">
+                    </div>
+
+                    <button id="apply-date-filter" class="button primary" type="button">Apply Filter</button>
+                    <button id="clear-date-filter" class="button secondary" type="button">Reset</button>
+                </div>
+            </div>
+
+            <p id="filter-message" class="filter-message" role="status" aria-live="polite"></p>
+
+            <!-- HISTORICAL TABLE -->
             <div class="table-container">
-
                 <table>
-
                     <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>Device</th>
-                            <th>Temperature</th>
-                            <th>Humidity</th>
+                            <th>#</th>
+                            <th>Timestamp</th>
+                            <th>Device ID</th>
+                            <th>Temperature (°C)</th>
+                            <th>Humidity (%)</th>
                         </tr>
                     </thead>
-
                     <tbody id="telemetry-table-body">
-                        <!-- Telemetry rows will be added here -->
+                        <tr>
+                            <td colspan="5" class="table-empty">No telemetry records received yet.</td>
+                        </tr>
                     </tbody>
-
                 </table>
+            </div>
 
+            <div class="table-footer">
+                <span id="record-count">0 readings</span>
+                <span>Showing the latest available records</span>
             </div>
 
         </section>
 
+        <!-- EXPORT -->
+        <section class="panel-section export-panel" id="export-data">
+            <div class="section-heading">
+                <div>
+                    <h2>Export Data</h2>
+                    <p>Download the currently displayed telemetry records</p>
+                </div>
+                <span class="section-icon violet">⇩</span>
+            </div>
+
+            <div class="export-card">
+                <div>
+                    <h3>Download your telemetry data</h3>
+                    <p>Export all available readings or the currently filtered records.</p>
+                </div>
+                <div class="export-buttons">
+                    <button id="export-csv" class="button export" type="button">⇩ Export CSV</button>
+                    <button id="export-json" class="button export alt" type="button">⇩ Export JSON</button>
+                </div>
+            </div>
+        </section>
+
+        <footer class="page-footer">
+            <span>Minimal IoT Dashboard</span>
+            <span>Temperature &amp; Humidity Monitoring</span>
+        </footer>
+
     </main>
+</div>
 
-
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Socket.IO Client -->
 <script src="http://localhost:3000/socket.io/socket.io.js"></script>
-
-<!-- Our Dashboard JavaScript -->
 <script src="app.js"></script>
+
+<script>
+    const navLinks = document.querySelectorAll(".nav-link");
+    const sections = document.querySelectorAll("main section[id]");
+
+    if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(link => {
+                        link.classList.toggle(
+                            "active",
+                            link.getAttribute("href") === "#" + entry.target.id
+                        );
+                    });
+                }
+            });
+        }, { rootMargin: "-20% 0px -65% 0px" });
+
+        sections.forEach(section => observer.observe(section));
+    }
+</script>
 
 </body>
 </html>
