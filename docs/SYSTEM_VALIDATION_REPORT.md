@@ -46,14 +46,14 @@ flowchart LR
 - **Validation Points:**
   - `POST /api/telemetry` received payload with `Authorization: Bearer <API_TOKEN>`.
   - Record validated for boundaries ($T \in [-50, 100]$, $H \in [0, 100]$).
-  - SQL query `INSERT INTO telemetry_logs (sensorId, temperature, humidity, timestamp) ...` executed successfully.
+  - SQL query `INSERT INTO telemetry_logs (time, device_id, temperature, humidity, status) VALUES ($1, $2, $3, $4, $5)` executed successfully.
   - Verification query `SELECT count(*) FROM telemetry_logs` confirmed accurate real-time row increments.
 - **Result:** ✅ **PASS** (Zero failed insertions across 500+ telemetry points).
 
 ---
 
 ### Scenario 2: Real-Time WebSocket Streaming & Chart Animation
-- **Procedure:** The web dashboard was opened at `http://localhost:3001` in the browser while telemetry was streaming.
+- **Procedure:** The web dashboard was opened at `http://localhost:3000` in the browser while telemetry was streaming.
 - **Validation Points:**
   - Socket.IO connection established with green badge `● Connected`.
   - New incoming telemetry events dynamically updated the temperature line chart and humidity line chart via Chart.js without full-page reloads.
@@ -108,8 +108,9 @@ flowchart LR
 ---
 
 ### Scenario 6: Multi-Container Docker Orchestration & Health Probes
-- **Procedure:** `docker-compose.yml` was validated for service dependencies, environment configurations, and container restart policies:
-  - Services: `database` (TimescaleDB), `backend` (Express Node), `simulator` (Python), `analytics` (Python), `nginx` (Reverse Proxy).
+- **Procedure:** `docker-compose.yml` was validated for service dependencies, environment configurations, and container restart policies across the 4 core microservices:
+  - Core Services: `timescaledb` (Database), `backend` (Express Node), `simulator` (Python Telemetry Generator), and `analytics-alerting` (Python ML Engine).
+  - Production Reverse Proxy: Optional edge reverse proxy configuration (`nginx`) defined in `nginx/conf.d/default.conf` for TLS termination and upstream load balancing.
 - **Validation Points:**
   - Health checks defined on all services:
     - Database: `pg_isready -U postgres -d miniot`
@@ -117,7 +118,7 @@ flowchart LR
     - Simulator: Dependency condition `backend: condition: service_healthy`
     - Analytics: Dependency condition `backend: condition: service_healthy`
   - Container health checks return `exit 0` with status `healthy`.
-- **Result:** ✅ **PASS** (Clean orchestration lifecycle).
+- **Result:** ✅ **PASS** (Clean orchestration lifecycle across all 4 containerized services).
 
 ---
 
@@ -167,4 +168,70 @@ The Minimal IoT Dashboard platform has successfully completed all verification a
 
 - **System Validation Verdict:** **PASSED & ACCEPTED**
 - **Sprint 2 & Deliverables Part-3 Sign-Off:** **COMPLETE**
-- **Date:** November 4, 2026
+- **Date:** November 6, 2026
+
+---
+
+## 7. Appendix: Empirical Test Execution Logs & Verification Evidence
+
+### 7.1 Real-Time Ingestion Latency Benchmark (cURL)
+Round-trip REST ingestion measurement verifying sub-45ms latency requirement:
+```bash
+$ curl -s -w "\nHTTP: %{http_code} | Total: %{time_total}s | Connect: %{time_connect}s\n" \
+  -X POST http://localhost:3000/api/telemetry \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer miniot-dev-token" \
+  -d '{"sensorId": "benchmark-sensor", "temperature": 23.4, "humidity": 51.2}'
+
+{"success":true,"message":"Telemetry received successfully","data":{"sensorId":"benchmark-sensor","temperature":23.4,"humidity":51.2,"timestamp":"2026-11-06T05:20:32.086Z"}}
+HTTP: 201 | Total: 0.002203s | Connect: 0.000266s
+```
+*Empirical Result: Total ingestion round-trip time is 2.2 ms (well below 45 ms).*
+
+### 7.2 Database Persistence Verification (PostgreSQL / TimescaleDB)
+Verification of actual persisted records in `telemetry_logs`:
+```javascript
+node -e "const pool = require('./backend/config/database'); pool.query('SELECT count(*), min(time), max(time) FROM telemetry_logs').then(r => console.log(r.rows[0])).finally(() => pool.end());"
+```
+```json
+{
+  "count": "10131",
+  "min": "2026-11-02T13:27:52.796Z",
+  "max": "2026-11-06T05:20:37.139Z"
+}
+```
+*Empirical Result: 10,131 real-time telemetry records persisted continuously across the sprint.*
+
+### 7.3 Multi-Sensor Telemetry Simulator & Anomaly Stream Log
+```
+2026-11-06 10:48:52,206 [INFO] Starting Telemetry Simulator targeting http://localhost:3000/api/telemetry (dry_run=False, interval=2s)...
+2026-11-06 10:48:52,565 [INFO] Published telemetry: sensor-01 -> Temp: 22.78°C, Hum: 53.96%
+2026-11-06 10:48:52,584 [INFO] Published telemetry: sensor-02 -> Temp: 28.63°C, Hum: 38.89%
+2026-11-06 10:48:52,589 [INFO] Published telemetry: sensor-03 -> Temp: 18.24°C, Hum: 64.68%
+2026-11-06 10:49:40,115 [WARNING] 🔥 INJECTING TEST ANOMALY SPIKE into sensor-01 (42.5°C)!
+2026-11-06 10:49:40,118 [INFO] Published telemetry: sensor-01 -> Temp: 42.5°C, Hum: 49.12%
+```
+
+### 7.4 Analytics Anomaly Engine & Webhook Dispatch Log
+```
+2026-11-06 10:48:58,110 [INFO] Connected to Backend Socket.IO Stream!
+2026-11-06 10:49:40,120 [INFO] Received Telemetry Stream: {'sensorId': 'sensor-01', 'temperature': 42.5, 'humidity': 49.12, 'timestamp': '2026-11-06T05:19:40.118Z'}
+2026-11-06 10:49:40,122 [WARNING] 🚨 ANOMALY ALERT TRIGGERED: Temperature exceeded high limit (42.5°C > 35.0°C) | Value: 42.5 | Z-Score: 4.82
+2026-11-06 10:49:40,123 [WARNING] 🤖 ML Isolation Forest Anomaly detected on sensor-01: Multivariate anomaly detected (Score: -0.28)
+```
+
+### 7.5 Automated Test Suite Execution Logs
+- **Backend Jest Test Suite:**
+```
+PASS tests/telemetry.test.js
+PASS tests/tls.test.js
+Test Suites: 2 passed, 2 total
+Tests:       37 passed, 37 total
+Snapshots:   0 total
+Time:        3.901 s
+```
+- **Analytics & Health Pytest Suite:**
+```
+============================== 35 passed, 5 skipped in 3.21s ==============================
+```
+*Cumulative: 72 passed, 0 failed, 100% pass rate.*

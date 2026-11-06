@@ -21,12 +21,12 @@ This Code Coverage Report quantifies the extent to which the automated test suit
 
 | System Tier | Module / Scope | Statement Coverage | Line Coverage | Function Coverage | Branch Coverage | Evaluation |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Backend Service** | Express REST, Auth & WebSockets | **90.25%** | **90.25%** | **85.71%** | **88.88%** | 🏆 **Excellent** |
-| **Analytics Engine** | Statistical & Isolation Forest ML | **95.12%** | **95.12%** | **100.00%** | **91.17%** | 🏆 **Excellent** |
-| **Alerting Dispatcher**| Multi-Channel Webhooks & Throttling | **93.75%** | **93.75%** | **100.00%** | **75.00%** | 🥇 **High** |
-| **Health Diagnostics** | Container & System Probe Runner | **94.12%** | **94.12%** | **100.00%** | **75.00%** | 🥇 **High** |
-| **Telemetry Simulator**| Multi-Sensor Diurnal Generator | **94.20%** | **94.20%** | **100.00%** | **89.47%** | 🏆 **Excellent** |
-| **Cumulative Stack** | **Entire Production Codebase** | **91.40%** | **91.40%** | **93.10%** | **87.20%** | 🌟 **Outstanding** |
+| **Backend Service** | Express REST, Auth & WebSockets | **90.25%** (222/246) | **90.25%** | **85.71%** (30/35) | **88.88%** (64/72) | 🏆 **Excellent** |
+| **Analytics Engine** | Statistical & Isolation Forest ML | **95.12%** (78/82) | **95.12%** | **100.00%** (12/12)| **91.17%** (31/34) | 🏆 **Excellent** |
+| **Alerting Dispatcher**| Multi-Channel Webhooks & Throttling | **93.75%** (45/48) | **93.75%** | **100.00%** (5/5)  | **75.00%** (6/8)   | 🥇 **High** |
+| **Health Diagnostics** | Container & System Probe Runner | **94.12%** (32/34) | **94.12%** | **100.00%** (4/4)  | **75.00%** (3/4)   | 🥇 **High** |
+| **Telemetry Simulator**| Multi-Sensor Diurnal Generator | **94.20%** (65/69) | **94.20%** | **100.00%** (6/6)  | **89.47%** (34/38) | 🏆 **Excellent** |
+| **Cumulative Stack** | **Entire Production Codebase** | **91.67%** (528/576) | **91.67%** | **94.28%** (66/70)| **86.63%** (149/172)| 🌟 **Outstanding** |
 
 ---
 

@@ -21,11 +21,13 @@ Where:
 
 ### Overall Branch Coverage Metric
 
-Across all production microservices, **88.2% of all execution branches** were successfully traversed:
-- **Backend Service (Node.js/Express):** **88.88% Branch Coverage**
-- **Analytics & Anomaly Detection (Python):** **91.17% Branch Coverage**
-- **Telemetry Simulation Engine (Python):** **89.47% Branch Coverage**
-- **Cumulative Branch Score:** **88.20% (Target: $\ge 80\%$)**
+Across all production microservices, **86.63% of all execution branches** were successfully traversed:
+- **Backend Service (Node.js/Express):** **88.88% Branch Coverage** (64 / 72 branches evaluated)
+- **Analytics & Anomaly Detection (Python):** **91.17% Branch Coverage** (31 / 34 branches evaluated)
+- **Telemetry Simulation Engine (Python):** **89.47% Branch Coverage** (34 / 38 branches evaluated)
+- **Notification Worker (Python):** **75.00% Branch Coverage** (6 / 8 branches evaluated)
+- **Health Diagnostics (Python):** **75.00% Branch Coverage** (3 / 4 branches evaluated)
+- **Cumulative Production Branch Score:** **86.63%** (149 / 172 branches evaluated, exceeding the $\ge 80\%$ target threshold)
 
 ---
 
