@@ -139,7 +139,6 @@
                 <span class="section-icon coral">◷</span>
             </div>
 
-            <!-- SIX HISTORICAL STATISTICS -->
             <div class="historical-summary">
 
                 <article class="history-stat-card temp-stat">
@@ -285,8 +284,30 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="http://localhost:3000/socket.io/socket.io.js"></script>
-<script src="app.js"></script>
+
+<script>
+    // Use the current hostname for a backend running on port 3000.
+    // Set window.BACKEND_URL before this script if the backend is hosted elsewhere.
+    window.BACKEND_URL = window.BACKEND_URL ||
+        `${window.location.protocol}//${window.location.hostname}:3000`;
+
+    const socketIoScript = document.createElement("script");
+    socketIoScript.src = `${window.BACKEND_URL}/socket.io/socket.io.js`;
+
+    socketIoScript.onload = () => {
+        const appScript = document.createElement("script");
+        appScript.src = "app.js";
+        document.body.appendChild(appScript);
+    };
+
+    socketIoScript.onerror = () => {
+        console.error("Could not load the Socket.IO client from:", socketIoScript.src);
+        const status = document.getElementById("connection-status");
+        status.textContent = "● Backend script unavailable";
+    };
+
+    document.body.appendChild(socketIoScript);
+</script>
 
 <script>
     const navLinks = document.querySelectorAll(".nav-link");

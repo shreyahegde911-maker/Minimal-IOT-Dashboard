@@ -13,6 +13,17 @@ const telemetryHistory = [];
 const deviceStatistics = {};
 const deviceReadings = new Map();
 
+// Convert valid telemetry values to numbers.
+// Missing or invalid values remain null, never zero.
+function parseTelemetryValue(value) {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
+}
+
 let filteredHistory = null;
 
 const deviceChartColors = [
@@ -279,7 +290,12 @@ const historicalChart = new Chart(
 // SOCKET.IO CONNECTION
 // ==========================================
 
-const socket = io("http://localhost:3000", {
+// Uses the current hostname instead of hardcoded localhost.
+// Set window.BACKEND_URL before loading app.js if needed.
+const backendBaseUrl = window.BACKEND_URL ||
+    `${window.location.protocol}//${window.location.hostname}:3000`;
+
+const socket = io(backendBaseUrl, {
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
@@ -309,10 +325,6 @@ socket.on("connect_error", (error) => {
 // ==========================================
 // DEVICE STATUS CARDS
 // ==========================================
-
- // =========================
-// Render Attractive Device Cards
-// =========================
 
 function renderDeviceCards() {
     deviceCards.innerHTML = "";
@@ -415,10 +427,12 @@ function renderDeviceCards() {
         const temperatureItem = document.createElement("div");
         temperatureItem.className = "telemetry-item";
 
+        const temperatureValue = parseTelemetryValue(device.temperature);
+
         temperatureItem.innerHTML = `
             <span>Temperature</span>
             <div class="reading-row">
-                <strong>${device.temperature === null ? "-- °C" : `${device.temperature} °C`}</strong>
+                <strong>${temperatureValue === null ? "-- °C" : `${temperatureValue} °C`}</strong>
                 <span class="reading-icon temperature-icon">♨</span>
             </div>
         `;
@@ -427,10 +441,12 @@ function renderDeviceCards() {
         const humidityItem = document.createElement("div");
         humidityItem.className = "telemetry-item";
 
+        const humidityValue = parseTelemetryValue(device.humidity);
+
         humidityItem.innerHTML = `
             <span>Humidity</span>
             <div class="reading-row">
-                <strong>${device.humidity === null ? "-- %" : `${device.humidity} %`}</strong>
+                <strong>${humidityValue === null ? "-- %" : `${humidityValue} %`}</strong>
                 <span class="reading-icon humidity-icon">💧</span>
             </div>
         `;
@@ -478,7 +494,9 @@ function updateDeviceChart(chart, sensorId, value, timestamp) {
     chart.data.labels.push(time);
 
     chart.data.datasets.forEach(item => {
-        item.data.push(item === dataset ? Number(value) : null);
+        item.data.push(
+            item === dataset ? parseTelemetryValue(value) : null
+        );
     });
 
     if (chart.data.labels.length > MAX_CHART_POINTS) {
@@ -498,8 +516,8 @@ function updateDeviceChart(chart, sensorId, value, timestamp) {
 
 function calculateStatistics(values) {
     const validValues = values
-        .map(Number)
-        .filter(Number.isFinite);
+        .map(parseTelemetryValue)
+        .filter(value => value !== null);
 
     if (validValues.length === 0) {
         return {
@@ -540,18 +558,15 @@ function updateDeviceStatistics(telemetry) {
 
     const stats = deviceStatistics[sensorId];
 
-    if (telemetry.temperature !== "" &&
-        telemetry.temperature !== null &&
-        telemetry.temperature !== undefined &&
-        Number.isFinite(Number(telemetry.temperature))) {
-        stats.temperature.push(Number(telemetry.temperature));
+    const temperature = parseTelemetryValue(telemetry.temperature);
+    const humidity = parseTelemetryValue(telemetry.humidity);
+
+    if (temperature !== null) {
+        stats.temperature.push(temperature);
     }
 
-    if (telemetry.humidity !== "" &&
-        telemetry.humidity !== null &&
-        telemetry.humidity !== undefined &&
-        Number.isFinite(Number(telemetry.humidity))) {
-        stats.humidity.push(Number(telemetry.humidity));
+    if (humidity !== null) {
+        stats.humidity.push(humidity);
     }
 
     stats.temperature =
@@ -608,12 +623,12 @@ function renderDeviceStatistics() {
 
 function updateHistoricalSummary(records) {
     const temperatures = records
-        .map(record => Number(record.temperature))
-        .filter(Number.isFinite);
+        .map(record => parseTelemetryValue(record.temperature))
+        .filter(value => value !== null);
 
     const humidities = records
-        .map(record => Number(record.humidity))
-        .filter(Number.isFinite);
+        .map(record => parseTelemetryValue(record.humidity))
+        .filter(value => value !== null);
 
     const temperatureStats = calculateStatistics(temperatures);
     const humidityStats = calculateStatistics(humidities);
@@ -665,16 +680,14 @@ function updateHistoricalChart(records) {
     );
 
     historicalChart.data.datasets[0].data =
-        sortedRecords.map(record => {
-            const value = Number(record.temperature);
-            return Number.isFinite(value) ? value : null;
-        });
+        sortedRecords.map(record =>
+            parseTelemetryValue(record.temperature)
+        );
 
     historicalChart.data.datasets[1].data =
-        sortedRecords.map(record => {
-            const value = Number(record.humidity);
-            return Number.isFinite(value) ? value : null;
-        });
+        sortedRecords.map(record =>
+            parseTelemetryValue(record.humidity)
+        );
 
     historicalChart.update("none");
 }
@@ -707,16 +720,19 @@ function renderTelemetryTable(records) {
     newestFirst.forEach((telemetry, index) => {
         const row = document.createElement("tr");
 
+        const temperature = parseTelemetryValue(telemetry.temperature);
+        const humidity = parseTelemetryValue(telemetry.humidity);
+
         const values = [
             index + 1,
             new Date(telemetry.timestamp).toLocaleString(),
             telemetry.sensorId,
-            telemetry.temperature === ""
+            temperature === null
                 ? "--"
-                : `${Number(telemetry.temperature).toFixed(2)} °C`,
-            telemetry.humidity === ""
+                : `${temperature.toFixed(2)} °C`,
+            humidity === null
                 ? "--"
-                : `${Number(telemetry.humidity).toFixed(2)} %`
+                : `${humidity.toFixed(2)} %`
         ];
 
         values.forEach(value => {
@@ -814,15 +830,8 @@ socket.on("telemetry", data => {
         offlineTimer: null
     };
 
-    if (data.temperature !== undefined &&
-        data.temperature !== null) {
-        device.temperature = Number(data.temperature);
-    }
-
-    if (data.humidity !== undefined &&
-        data.humidity !== null) {
-        device.humidity = Number(data.humidity);
-    }
+    device.temperature = parseTelemetryValue(data.temperature);
+    device.humidity = parseTelemetryValue(data.humidity);
 
     device.online = true;
     device.lastSeen = Date.now();
@@ -840,37 +849,27 @@ socket.on("telemetry", data => {
 
     renderDeviceCards();
 
-    // Update the two live charts.
-    if (Number.isFinite(Number(data.temperature))) {
-        updateDeviceChart(
-            temperatureChart,
-            sensorId,
-            data.temperature,
-            timestamp
-        );
-    }
+    // Missing readings are added as gaps, not zero values.
+    updateDeviceChart(
+        temperatureChart,
+        sensorId,
+        device.temperature,
+        timestamp
+    );
 
-    if (Number.isFinite(Number(data.humidity))) {
-        updateDeviceChart(
-            humidityChart,
-            sensorId,
-            data.humidity,
-            timestamp
-        );
-    }
+    updateDeviceChart(
+        humidityChart,
+        sensorId,
+        device.humidity,
+        timestamp
+    );
 
-    // Store the historical reading.
+    // Store missing readings as null.
     const record = {
         timestamp,
         sensorId,
-        temperature:
-            data.temperature === undefined || data.temperature === null
-                ? ""
-                : Number(data.temperature),
-        humidity:
-            data.humidity === undefined || data.humidity === null
-                ? ""
-                : Number(data.humidity)
+        temperature: device.temperature,
+        humidity: device.humidity
     };
 
     telemetryHistory.push(record);
