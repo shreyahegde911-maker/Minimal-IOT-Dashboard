@@ -24,7 +24,7 @@ SIMULATION_INTERVAL_SEC = int(
     os.getenv("SIMULATION_INTERVAL_SEC", "3")
 )
 
-API_TOKEN = os.getenv("API_TOKEN", "")
+API_TOKEN = os.getenv("API_TOKEN", "miniot-dev-token")
 
 SENSORS = [
     {"id": "sensor-01", "base_temp": 22.0, "base_hum": 55.0},
@@ -73,8 +73,8 @@ def generate_telemetry(sensor: dict, tick: int) -> dict:
 
     return {
         "sensorId": sensor["id"],
-        "temperature": temperature,
-        "humidity": humidity,
+        "temperature": round(temperature, 1),
+        "humidity": round(humidity, 1),
     }
 
 
@@ -120,13 +120,14 @@ def run_cycle(
     """Generate readings, validate them, and publish with retries."""
 
     emitted = []
-
-    headers = {}
+    headers = {"Content-Type": "application/json"}
 
     if API_TOKEN:
         headers["Authorization"] = f"Bearer {API_TOKEN}"
 
-    for sensor in SENSORS:
+    for idx, sensor in enumerate(SENSORS):
+        if not dry_run and idx > 0:
+            time.sleep(0.5)
         payload = generate_telemetry(sensor, tick)
 
         if not validate_payload(payload):

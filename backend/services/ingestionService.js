@@ -17,6 +17,14 @@ function validateTelemetry(sensorId, temperature, humidity) {
         };
     }
 
+    const SENSOR_ID_REGEX = /^[a-zA-Z0-9_-]{3,32}$/;
+    if (!SENSOR_ID_REGEX.test(sensorId.trim())) {
+        return {
+            valid: false,
+            message: "sensorId must be an alphanumeric string between 3 and 32 characters"
+        };
+    }
+
     if (typeof temperature !== "number" || !Number.isFinite(temperature)) {
         return {
             valid: false,

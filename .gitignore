@@ -17,3 +17,8 @@ desktop.ini
 *.pfx
 certs/*
 !certs/.gitkeep
+
+# Test & Coverage artifacts
+.coverage
+coverage/
+backend/coverage/

@@ -73,3 +73,9 @@ def test_health_diagnostic_metrics_structure():
     assert engine_metrics["sensor_window_metrics"]["sensor-multi-02"]["temp_window_len"] == 1
 
 
+def test_health_main_execution():
+    """Verify health diagnostics main function runs without error."""
+    from analytics_alerting.src.health import main
+    main()
+
+

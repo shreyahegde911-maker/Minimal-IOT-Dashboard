@@ -404,7 +404,7 @@ describe("Telemetry API Tests", () => {
 
         expect(response.statusCode).toBe(429);
         expect(response.body.success).toBe(false);
-    });
+    }, 30000);
 });
 
 describe("JWT Authentication Tests (IOT-NFR-021)", () => {

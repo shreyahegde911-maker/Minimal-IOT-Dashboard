@@ -8,7 +8,6 @@ const http = require("http");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 // Configure proxy trust for reverse proxy topologies (Nginx / Docker)
 // Defaults to loopback and private container subnets (RFC 1918 / unique local).
 // Avoids 'true' which blindly trusts untrusted headers and allows IP/proto spoofing.
@@ -24,6 +23,10 @@ const { tlsSecurity } = require("./middleware/tlsSecurity");
 // Global Middleware
 app.use(tlsSecurity);
 app.use(express.json());
+
+// Serve dashboard frontend
+const path = require("path");
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 // Import routes
 const telemetryRoutes = require("./routes/telemetry");
