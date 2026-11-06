@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # TimescaleDB Time-Series Storage (Member 3)
   timescaledb:
