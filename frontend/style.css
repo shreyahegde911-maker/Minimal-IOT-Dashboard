@@ -350,3 +350,61 @@ tbody tr:hover {
 .statistics-card th {
     background: #f1f5f9;
 }
+
+/* Table Controls & Pagination */
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 15px 0 10px 0;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+#log-count-info {
+    font-size: 14px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-actions label {
+    font-size: 14px;
+    color: #475569;
+}
+
+#log-limit-select {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+    color: #1e293b;
+    cursor: pointer;
+}
+
+#toggle-expand-logs {
+    padding: 6px 14px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#toggle-expand-logs:hover {
+    background: #1d4ed8;
+}
+

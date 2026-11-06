@@ -6,7 +6,7 @@
 **Author / QA Lead:** Dhruvanth U (Member 4 — `theDEMIGOD600` / `PES1UG24AM362`)  
 **Evaluation Date:** November 6, 2026  
 **Test Harness:** [`tests/test_software_and_security.py`](file:///Users/thedemigod/Documents/MinIOT+routing/MinIOT/tests/test_software_and_security.py)  
-**Execution Pass Rate:** **48 / 48 Tests Passed (100.0%)**
+**Execution Pass Rate:** **49 / 49 Tests Passed (100.0%)**
 
 ---
 
@@ -38,7 +38,7 @@ The testing campaign evaluated the **Minimal IoT Dashboard** across two primary 
 
 | Test Domain | Target Specification | Test Cases Executed | Passed | Failed | Pass Rate | Mean Latency |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Software Development Testing** | Slides 4–29, 45–48 | 24 | 24 | 0 | **100.0%** | **22.5 ms** |
+| **Software Development Testing** | Slides 4–29, 45–48 | 25 | 25 | 0 | **100.0%** | **20.4 ms** |
 | **Security Development Testing** | Slides 30–44 | 24 | 24 | 0 | **100.0%** | **4.9 ms** |
 | **Total Automated Testing Suite** | Lecture-8 Syllabus | **48** | **48** | **0** | **100.0%** | **13.7 ms** |
 

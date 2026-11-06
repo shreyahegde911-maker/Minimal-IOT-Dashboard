@@ -52,8 +52,8 @@ def generate_telemetry(sensor: dict, tick: int) -> dict:
 
     return {
         "sensorId": sensor["id"],
-        "temperature": temperature,
-        "humidity": humidity
+        "temperature": round(temperature, 1),
+        "humidity": round(humidity, 1)
     }
 
 
@@ -84,7 +84,9 @@ def validate_payload(payload: dict) -> bool:
 def run_cycle(tick: int, ingest_url: str = BACKEND_INGEST_URL, dry_run: bool = False, max_retries: int = 2) -> List[Dict]:
     """Runs a single simulation tick across all virtual sensors with payload validation and retry logic."""
     emitted = []
-    for sensor in SENSORS:
+    for idx, sensor in enumerate(SENSORS):
+        if not dry_run and idx > 0:
+            time.sleep(0.5)
         payload = generate_telemetry(sensor, tick)
 
         if not validate_payload(payload):

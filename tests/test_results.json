@@ -6,8 +6,8 @@
       "slide_ref": "Slide 7 (Smoke & Sanity)",
       "procedure": "GET /api/health",
       "status": "PASS",
-      "duration_ms": 20.71,
-      "details": "Status: 200, Uptime: 715.714824041s, Latency: 20.4ms"
+      "duration_ms": 18.68,
+      "details": "Status: 200, Uptime: 1341.493711083s, Latency: 18.4ms"
     },
     {
       "id": "TC-SW-SMOKE-02",
@@ -15,8 +15,8 @@
       "slide_ref": "Slide 7 (Smoke & Sanity)",
       "procedure": "POST /api/telemetry with nominal values",
       "status": "PASS",
-      "duration_ms": 3.28,
-      "details": "Status: 201, Response: Telemetry received successfully, Latency: 3.2ms"
+      "duration_ms": 3.16,
+      "details": "Status: 201, Response: Telemetry received successfully, Latency: 3.0ms"
     },
     {
       "id": "TC-SW-FUNC-01",
@@ -24,8 +24,8 @@
       "slide_ref": "Slide 28 (Record Retrieval)",
       "procedure": "GET /api/telemetry with JWT",
       "status": "PASS",
-      "duration_ms": 80.6,
-      "details": "Status: 200, Retrieved 11722 historical records"
+      "duration_ms": 103.79,
+      "details": "Status: 200, Retrieved 18050 historical records"
     },
     {
       "id": "TC-SW-FUNC-02",
@@ -33,7 +33,7 @@
       "slide_ref": "Slide 28 (Record Retrieval)",
       "procedure": "GET /api/telemetry/sensor-01",
       "status": "PASS",
-      "duration_ms": 41.55,
+      "duration_ms": 34.69,
       "details": "Status: 200, Sensor-01 filtered successfully"
     },
     {
@@ -42,7 +42,7 @@
       "slide_ref": "Slide 7 (Functional - Failure cases)",
       "procedure": "GET /api/telemetry/non-existent-device-9999",
       "status": "PASS",
-      "duration_ms": 3.73,
+      "duration_ms": 2.79,
       "details": "Status: 200, Empty array returned for unknown sensor"
     },
     {
@@ -51,7 +51,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST temp: -40.0",
       "status": "PASS",
-      "duration_ms": 1.91,
+      "duration_ms": 2.19,
       "details": "Status: 201, Min temp (-40.0C) accepted"
     },
     {
@@ -60,7 +60,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST temp: 85.0",
       "status": "PASS",
-      "duration_ms": 1.27,
+      "duration_ms": 1.77,
       "details": "Status: 201, Max temp (+85.0C) accepted"
     },
     {
@@ -69,7 +69,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST temp: -40.1",
       "status": "PASS",
-      "duration_ms": 0.94,
+      "duration_ms": 1.01,
       "details": "Status: 400, Below min temp rejected with 400"
     },
     {
@@ -78,7 +78,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST temp: 85.1",
       "status": "PASS",
-      "duration_ms": 0.64,
+      "duration_ms": 0.86,
       "details": "Status: 400, Above max temp rejected with 400"
     },
     {
@@ -87,7 +87,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST hum: 0.0",
       "status": "PASS",
-      "duration_ms": 1.28,
+      "duration_ms": 1.49,
       "details": "Status: 201, Min humidity (0.0%) accepted"
     },
     {
@@ -96,7 +96,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST hum: 100.0",
       "status": "PASS",
-      "duration_ms": 1.22,
+      "duration_ms": 1.45,
       "details": "Status: 201, Max humidity (100.0%) accepted"
     },
     {
@@ -105,7 +105,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST hum: -0.1",
       "status": "PASS",
-      "duration_ms": 0.75,
+      "duration_ms": 0.91,
       "details": "Status: 400, Negative humidity rejected with 400"
     },
     {
@@ -114,7 +114,7 @@
       "slide_ref": "Slide 9 (Boundary tests)",
       "procedure": "POST hum: 100.1",
       "status": "PASS",
-      "duration_ms": 1.02,
+      "duration_ms": 0.74,
       "details": "Status: 400, Above 100% humidity rejected with 400"
     },
     {
@@ -123,8 +123,8 @@
       "slide_ref": "Slide 16, 46 (Integration & Stubs)",
       "procedure": "POST /api/telemetry -> Postgres Pool execution",
       "status": "PASS",
-      "duration_ms": 2.6,
-      "details": "Status: 201, Response returned in 2.4ms without unhandled DB blocking"
+      "duration_ms": 1.11,
+      "details": "Status: 201, Response returned in 1.1ms without unhandled DB blocking"
     },
     {
       "id": "TC-SW-INT-02",
@@ -132,7 +132,7 @@
       "slide_ref": "Slide 18, 21 (Sandwich Integration)",
       "procedure": "Verify UI root + API route + DB connection",
       "status": "PASS",
-      "duration_ms": 57.78,
+      "duration_ms": 77.54,
       "details": "Sandwich integrity: UI(200) -> Controller(200) -> Model(200)"
     },
     {
@@ -141,8 +141,8 @@
       "slide_ref": "Slide 6, 24 (System Testing)",
       "procedure": "Simulated Device -> REST Ingest -> DB Hypertable -> Query",
       "status": "PASS",
-      "duration_ms": 116.73,
-      "details": "E2E Flow Verified: Ingested on e2e-sensor-1793943785, retrieved 1 record(s) matching 27.88\u00b0C"
+      "duration_ms": 117.59,
+      "details": "E2E Flow Verified: Ingested on e2e-sensor-1793969614, retrieved 1 record(s) matching 27.88\u00b0C"
     },
     {
       "id": "TC-SW-ACC-01",
@@ -150,8 +150,8 @@
       "slide_ref": "Slide 12, 25 (Acceptance Testing)",
       "procedure": "GET /app.js static asset bundle",
       "status": "PASS",
-      "duration_ms": 1.59,
-      "details": "Status: 200, Dashboard script contains live socket listeners (16633 bytes)"
+      "duration_ms": 2.41,
+      "details": "Status: 200, Dashboard script contains live socket listeners (20414 bytes)"
     },
     {
       "id": "TC-SW-ACC-02",
@@ -159,8 +159,8 @@
       "slide_ref": "Slide 12, 25 (Acceptance Testing)",
       "procedure": "GET /style.css layout bundle",
       "status": "PASS",
-      "duration_ms": 1.4,
-      "details": "Status: 200, Stylesheet delivered (5362 bytes)"
+      "duration_ms": 1.37,
+      "details": "Status: 200, Stylesheet delivered (6367 bytes)"
     },
     {
       "id": "TC-SW-ACC-03",
@@ -168,8 +168,8 @@
       "slide_ref": "Slide 13 (Acceptance qualification)",
       "procedure": "Serialize historical telemetry to CSV",
       "status": "PASS",
-      "duration_ms": 56.86,
-      "details": "CSV export generated 11728 rows with RFC 4180 standard header"
+      "duration_ms": 85.42,
+      "details": "CSV export generated 18056 rows with RFC 4180 standard header"
     },
     {
       "id": "TC-SW-ACC-04",
@@ -177,8 +177,8 @@
       "slide_ref": "Slide 13 (Acceptance qualification)",
       "procedure": "Serialize historical telemetry to JSON array",
       "status": "PASS",
-      "duration_ms": 66.95,
-      "details": "JSON export confirmed valid array structure (11728 objects)"
+      "duration_ms": 97.23,
+      "details": "JSON export confirmed valid array structure (18056 objects)"
     },
     {
       "id": "TC-SW-REG-01",
@@ -186,7 +186,7 @@
       "slide_ref": "Slide 26 (Regression testing)",
       "procedure": "Re-probe health checks repeatedly",
       "status": "PASS",
-      "duration_ms": 5.67,
+      "duration_ms": 4.82,
       "details": "Regression stability: 5/5 consecutive health probes succeeded"
     },
     {
@@ -195,7 +195,7 @@
       "slide_ref": "Slide 7 (Recovery tests)",
       "procedure": "Send garbage string -> Probe health status",
       "status": "PASS",
-      "duration_ms": 3.9,
+      "duration_ms": 4.22,
       "details": "Server maintained healthy state (200) after handling malformed payload"
     },
     {
@@ -204,17 +204,26 @@
       "slide_ref": "Slide 7, 29 (Performance testing)",
       "procedure": "10 consecutive health probes latency evaluation",
       "status": "PASS",
-      "duration_ms": 5.59,
-      "details": "Avg latency: 0.53ms, Max: 0.63ms (Target: < 50ms)"
+      "duration_ms": 6.93,
+      "details": "Avg latency: 0.66ms, Max: 0.73ms (Target: < 50ms)"
     },
     {
-      "id": "TC-SW-PERF-02",
-      "title": "Ingestion Throughput Latency",
-      "slide_ref": "Slide 11, 29 (Load & Performance)",
-      "procedure": "10 consecutive DB write operations",
+      "id": "TC-SW-STRESS-01",
+      "title": "High-Rate Stress Testing",
+      "slide_ref": "Slide 10, 11, 29 (Stress Test)",
+      "procedure": "25 rapid consecutive writes to test limits",
       "status": "PASS",
-      "duration_ms": 16.52,
-      "details": "Ingestion Avg Latency: 1.59ms across 10 writes with DB persistence"
+      "duration_ms": 30.59,
+      "details": "Stress test: 25/25 writes succeeded in 30.6ms without server drop"
+    },
+    {
+      "id": "TC-SW-SOAK-01",
+      "title": "Endurance & Soak Testing",
+      "slide_ref": "Slide 7, 29 (Performance/Soak)",
+      "procedure": "20 interleaved probe/write cycles",
+      "status": "PASS",
+      "duration_ms": 39.09,
+      "details": "Soak test: 20/20 continuous cycles sustained without latency creep or failure"
     }
   ],
   "security_dev": [
@@ -224,7 +233,7 @@
       "slide_ref": "Slide 33 (Reconnaissance)",
       "procedure": "Inspect response headers for server disclosure",
       "status": "PASS",
-      "duration_ms": 2.66,
+      "duration_ms": 0.6,
       "details": "HTTP Status: 200, Server/Powered-By banner: 'Express' (Identified for surface assessment)"
     },
     {
@@ -233,7 +242,7 @@
       "slide_ref": "Slide 33 (Scanning & Nmap)",
       "procedure": "TCP connect probe on port 5432",
       "status": "PASS",
-      "duration_ms": 0.16,
+      "duration_ms": 0.1,
       "details": "PostgreSQL port 5432 status: OPEN (Guarded by SCRAM-SHA-256 password)"
     },
     {
@@ -242,7 +251,7 @@
       "slide_ref": "Slide 31, 33 (Auth Assessment)",
       "procedure": "POST /api/telemetry with zero headers",
       "status": "PASS",
-      "duration_ms": 1.26,
+      "duration_ms": 0.64,
       "details": "Status: 401, Rejected unauthenticated payload"
     },
     {
@@ -251,7 +260,7 @@
       "slide_ref": "Slide 33 (Exploitation)",
       "procedure": "POST with invalid Bearer token",
       "status": "PASS",
-      "duration_ms": 0.89,
+      "duration_ms": 0.75,
       "details": "Status: 401, Forged API Token rejected by timingSafeEqual"
     },
     {
@@ -260,7 +269,7 @@
       "slide_ref": "Slide 28, 33 (Auth Assessment)",
       "procedure": "GET /api/telemetry without Authorization",
       "status": "PASS",
-      "duration_ms": 1.87,
+      "duration_ms": 0.76,
       "details": "Status: 401, Rejection message: Authorization header is required"
     },
     {
@@ -269,7 +278,7 @@
       "slide_ref": "Slide 33 (Exploitation)",
       "procedure": "GET with corrupted cryptographic signature",
       "status": "PASS",
-      "duration_ms": 1.34,
+      "duration_ms": 1.08,
       "details": "Status: 401, Tampered JWT signature successfully blocked"
     },
     {
@@ -278,7 +287,7 @@
       "slide_ref": "Slide 33 (Exploitation)",
       "procedure": "GET with alg='none' unsigned token",
       "status": "PASS",
-      "duration_ms": 2.6,
+      "duration_ms": 0.64,
       "details": "Status: 401, Algorithm 'none' attack blocked by HS256 enforcement"
     },
     {
@@ -287,7 +296,7 @@
       "slide_ref": "Slide 33 (Auth Assessment)",
       "procedure": "GET with expired iat/exp timestamp",
       "status": "PASS",
-      "duration_ms": 1.27,
+      "duration_ms": 0.93,
       "details": "Status: 401, Expired token rejected by verify expiration check"
     },
     {
@@ -296,7 +305,7 @@
       "slide_ref": "Slide 33, 35 (SQLMap & SQLi)",
       "procedure": "GET /api/telemetry/sensor-01' OR '1'='1",
       "status": "PASS",
-      "duration_ms": 1.63,
+      "duration_ms": 1.33,
       "details": "Status: 200, Parameterized query sanitized tautology payload"
     },
     {
@@ -305,7 +314,7 @@
       "slide_ref": "Slide 33, 35 (SQLMap & SQLi)",
       "procedure": "GET with UNION SELECT payload",
       "status": "PASS",
-      "duration_ms": 1.48,
+      "duration_ms": 1.32,
       "details": "Status: 200, UNION statement safely escaped by node-pg parameterized queries"
     },
     {
@@ -314,17 +323,17 @@
       "slide_ref": "Slide 33, 35 (SQLMap & SQLi)",
       "procedure": "GET with pg_sleep injection",
       "status": "PASS",
-      "duration_ms": 1.28,
-      "details": "Status: 200, Latency: 1.2ms (< 1000ms, sleep injected query blocked)"
+      "duration_ms": 1.31,
+      "details": "Status: 200, Latency: 1.3ms (< 1000ms, sleep injected query blocked)"
     },
     {
       "id": "TC-SEC-XSS-01",
-      "title": "Cross-Site Scripting (XSS) Stored Vector",
+      "title": "Cross-Site Scripting (XSS) Input Sanitization",
       "slide_ref": "Slide 33 (OWASP XSS)",
       "procedure": "POST with <script> tag payload in sensorId",
       "status": "PASS",
-      "duration_ms": 51.6,
-      "details": "Response delivered with Content-Type: application/json; charset=utf-8 (Defends against script execution)"
+      "duration_ms": 0.87,
+      "details": "Status: 400, Malicious script tag rejected at validation boundary: sensorId must be an alphanumeric string between 3 and 32 characters"
     },
     {
       "id": "TC-SEC-PROTO-01",
@@ -332,7 +341,7 @@
       "slide_ref": "Slide 33 (Vulnerability Assessment)",
       "procedure": "POST with __proto__ injection payload",
       "status": "PASS",
-      "duration_ms": 3.01,
+      "duration_ms": 1.3,
       "details": "Status: 201, JSON parser maintained memory safety without prototype pollution"
     },
     {
@@ -341,7 +350,7 @@
       "slide_ref": "Slide 9, 33 (Compliance & Headers)",
       "procedure": "Check X-Content-Type-Options header",
       "status": "PASS",
-      "duration_ms": 1.36,
+      "duration_ms": 0.91,
       "details": "X-Content-Type-Options: nosniff (MIME confusion prevented)"
     },
     {
@@ -350,7 +359,7 @@
       "slide_ref": "Slide 9, 33 (Compliance & Headers)",
       "procedure": "Check X-Frame-Options header",
       "status": "PASS",
-      "duration_ms": 0.75,
+      "duration_ms": 0.69,
       "details": "X-Frame-Options: DENY (Clickjacking attacks mitigated)"
     },
     {
@@ -359,7 +368,7 @@
       "slide_ref": "Slide 10, 11 (Load/Stress Testing)",
       "procedure": "Verify rate limiting structure",
       "status": "PASS",
-      "duration_ms": 0.56,
+      "duration_ms": 0.51,
       "details": "Rate limiter middleware active and non-blocking for operational health routes"
     },
     {
@@ -368,8 +377,8 @@
       "slide_ref": "Slide 38-42 (Fuzzing Overview)",
       "procedure": "POST 50KB string in sensorId",
       "status": "PASS",
-      "duration_ms": 3.35,
-      "details": "Status: 500, 50KB payload handled safely in 3.1ms without daemon crash"
+      "duration_ms": 1.0,
+      "details": "Status: 400, 50KB payload cleanly rejected by regex length check in 0.8ms: sensorId must be an alphanumeric string between 3 and 32 characters"
     },
     {
       "id": "TC-SEC-FUZZ-02",
@@ -377,7 +386,7 @@
       "slide_ref": "Slide 39 (Types of Fuzzers)",
       "procedure": "POST arrays/objects into numeric fields",
       "status": "PASS",
-      "duration_ms": 1.07,
+      "duration_ms": 0.57,
       "details": "Status: 400, Array/Object in scalar fields rejected with 400 Bad Request"
     },
     {
@@ -386,7 +395,7 @@
       "slide_ref": "Slide 38, 41 (Fuzzing Edge Cases)",
       "procedure": "POST NaN and Infinity strings",
       "status": "PASS",
-      "duration_ms": 1.57,
+      "duration_ms": 1.5,
       "details": "NaN Status: 400, Infinity Status: 400 (Both rejected cleanly)"
     },
     {
@@ -395,8 +404,8 @@
       "slide_ref": "Slide 38, 41 (Fuzzing Malformed Inputs)",
       "procedure": "POST null bytes and Unicode control chars",
       "status": "PASS",
-      "duration_ms": 17.51,
-      "details": "Status: 500, Null-bytes and RTL override Unicode handled safely without process abort"
+      "duration_ms": 0.82,
+      "details": "Status: 400, Null-bytes and RTL override Unicode rejected by alphanumeric validator: sensorId must be an alphanumeric string between 3 and 32 characters"
     },
     {
       "id": "TC-SEC-FUZZ-05",
@@ -404,7 +413,7 @@
       "slide_ref": "Slide 38 (Fuzzing Overview)",
       "procedure": "POST truncated raw JSON bytes",
       "status": "PASS",
-      "duration_ms": 2.11,
+      "duration_ms": 0.96,
       "details": "Status: 400, Truncated JSON syntax caught by Express body-parser with 400"
     },
     {
@@ -413,7 +422,7 @@
       "slide_ref": "Slide 39, 41 (Smart Fuzzing)",
       "procedure": "POST -0.0 and 5.5e1",
       "status": "PASS",
-      "duration_ms": 8.6,
+      "duration_ms": 1.02,
       "details": "Status: 201, Negative zero (-0.0) and scientific notation (5.5e1 = 55.0%) parsed correctly"
     },
     {
@@ -422,7 +431,7 @@
       "slide_ref": "Slide 38, 41 (Fuzzing Unexpected Inputs)",
       "procedure": "POST booleans in float fields",
       "status": "PASS",
-      "duration_ms": 1.37,
+      "duration_ms": 0.59,
       "details": "Status: 400, Boolean value in numeric fields handled without uncaught TypeError"
     },
     {
@@ -431,7 +440,7 @@
       "slide_ref": "Slide 38 (Fuzzing Overview)",
       "procedure": "POST empty JSON object {}",
       "status": "PASS",
-      "duration_ms": 0.8,
+      "duration_ms": 0.61,
       "details": "Status: 400, Empty object {} correctly rejected with 400"
     }
   ]

@@ -122,6 +122,53 @@ const exportCsvButton =
 const exportJsonButton =
     document.getElementById("export-json");
 
+const logLimitSelect =
+    document.getElementById("log-limit-select");
+
+const toggleExpandButton =
+    document.getElementById("toggle-expand-logs");
+
+const logCountInfo =
+    document.getElementById("log-count-info");
+
+let visibleLogLimit = 6;
+let isExpanded = false;
+
+function formatOneDecimal(val) {
+    if (val === null || val === undefined || val === "" || isNaN(Number(val))) {
+        return "--";
+    }
+    return Number(val).toFixed(1);
+}
+
+// Table controls setup
+if (logLimitSelect) {
+    logLimitSelect.addEventListener("change", (e) => {
+        visibleLogLimit = e.target.value === "all" ? "all" : Number(e.target.value);
+        isExpanded = visibleLogLimit === "all";
+        if (toggleExpandButton) {
+            toggleExpandButton.textContent = isExpanded ? "Collapse" : "Expand All";
+        }
+        renderTelemetryTable();
+    });
+}
+
+if (toggleExpandButton) {
+    toggleExpandButton.addEventListener("click", () => {
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+            visibleLogLimit = "all";
+            toggleExpandButton.textContent = "Collapse";
+            if (logLimitSelect) logLimitSelect.value = "all";
+        } else {
+            visibleLogLimit = 6;
+            toggleExpandButton.textContent = "Expand All";
+            if (logLimitSelect) logLimitSelect.value = "6";
+        }
+        renderTelemetryTable();
+    });
+}
+
 // =========================
 // Render Device Cards
 // =========================
@@ -158,7 +205,7 @@ function renderDeviceCards() {
         temperatureValue.textContent =
             device.temperature === null
                 ? "-- °C"
-                : `${device.temperature} °C`;
+                : `${formatOneDecimal(device.temperature)} °C`;
 
         temperatureItem.append(
             temperatureLabel,
@@ -175,7 +222,7 @@ function renderDeviceCards() {
         humidityValue.textContent =
             device.humidity === null
                 ? "-- %"
-                : `${device.humidity} %`;
+                : `${formatOneDecimal(device.humidity)} %`;
 
         humidityItem.append(
             humidityLabel,
@@ -193,14 +240,14 @@ function renderDeviceCards() {
 // Historical Log Table
 // =========================
 
-function addTelemetryRow(telemetry) {
+function createTelemetryRowElement(telemetry) {
     const row = document.createElement("tr");
 
     const values = [
         new Date(telemetry.timestamp).toLocaleString(),
         telemetry.sensorId,
-        `${telemetry.temperature} °C`,
-        `${telemetry.humidity} %`
+        `${formatOneDecimal(telemetry.temperature)} °C`,
+        `${formatOneDecimal(telemetry.humidity)} %`
     ];
 
     values.forEach((value) => {
@@ -209,17 +256,39 @@ function addTelemetryRow(telemetry) {
         row.appendChild(cell);
     });
 
-    telemetryTableBody.prepend(row);
+    return row;
 }
 
 let filteredHistory = null;
 
 function renderTelemetryTable(records) {
+    const dataList = records || (filteredHistory !== null ? filteredHistory : telemetryHistory);
+
+    if (logCountInfo) {
+        const currentCount = (visibleLogLimit === "all" || isExpanded)
+            ? dataList.length
+            : Math.min(Number(visibleLogLimit), dataList.length);
+        logCountInfo.textContent = `Showing latest ${currentCount} of ${dataList.length} logs`;
+    }
+
+    if (!telemetryTableBody) return;
     telemetryTableBody.innerHTML = "";
 
-    records.forEach((telemetry) => {
-        addTelemetryRow(telemetry);
+    const limit = (visibleLogLimit === "all" || isExpanded)
+        ? dataList.length
+        : Number(visibleLogLimit);
+
+    const visibleRecords = dataList.slice(0, limit);
+
+    visibleRecords.forEach((telemetry) => {
+        telemetryTableBody.appendChild(createTelemetryRowElement(telemetry));
     });
+}
+
+function addTelemetryRow(telemetry) {
+    if (filteredHistory === null) {
+        renderTelemetryTable();
+    }
 }
 
 // =========================
@@ -434,8 +503,8 @@ function updateDeviceChart(chart, sensorId, value, timestamp) {
             borderColor: color,
             backgroundColor: color,
             borderWidth: 2,
-            pointRadius: 3,
-            tension: 0.3,
+            pointRadius: 2.5,
+            tension: 0.4,
             showLine: true
         };
 
@@ -444,7 +513,7 @@ function updateDeviceChart(chart, sensorId, value, timestamp) {
 
     dataset.data.push({
         x: time,
-        y: Number(value)
+        y: Number(Number(value).toFixed(1))
     });
 
     // Keep only the latest 60 readings per device.
@@ -461,6 +530,55 @@ function updateDeviceChart(chart, sensorId, value, timestamp) {
 // =========================
 // Receive Telemetry
 // =========================
+
+socket.on("init_history", (records) => {
+    if (!Array.isArray(records) || records.length === 0) return;
+
+    // Sort chronological for chart lines
+    const chronological = [...records].reverse();
+    chronological.forEach((r) => {
+        const sId = r.sensorId || r.device_id;
+        const time = r.timestamp || r.time || new Date().toISOString();
+        if (sId && r.temperature !== undefined) {
+            updateDeviceChart(temperatureChart, sId, r.temperature, time);
+        }
+        if (sId && r.humidity !== undefined) {
+            updateDeviceChart(humidityChart, sId, r.humidity, time);
+        }
+    });
+
+    // Store in history (newest first)
+    telemetryHistory = records.map((r) => ({
+        timestamp: r.timestamp || r.time,
+        sensorId: r.sensorId || r.device_id,
+        temperature: r.temperature,
+        humidity: r.humidity
+    }));
+
+    // Update latest card values
+    const seen = new Set();
+    records.forEach((r) => {
+        const sId = r.sensorId || r.device_id;
+        if (!seen.has(sId)) {
+            seen.add(sId);
+            deviceReadings.set(sId, {
+                temperature: r.temperature,
+                humidity: r.humidity,
+                online: true,
+                lastSeen: Date.now()
+            });
+            updateDeviceStatistics({
+                sensorId: sId,
+                temperature: r.temperature,
+                humidity: r.humidity
+            });
+        }
+    });
+
+    renderDeviceCards();
+    renderDeviceStatistics();
+    renderTelemetryTable();
+});
 
 socket.on("telemetry", (data) => {
     console.log("Telemetry received:", data);
@@ -526,7 +644,7 @@ socket.on("telemetry", (data) => {
         );
     }
 
-    // Save historical reading.
+    // Save historical reading (newest first).
     const record = {
         timestamp: time,
         sensorId: sensorId,
@@ -534,15 +652,15 @@ socket.on("telemetry", (data) => {
         humidity: data.humidity ?? ""
     };
 
-    telemetryHistory.push(record);
+    telemetryHistory.unshift(record);
 
     if (telemetryHistory.length > MAX_HISTORY) {
-        telemetryHistory.shift();
+        telemetryHistory.pop();
     }
 
     // Update the historical table.
     if (filteredHistory === null) {
-        addTelemetryRow(record);
+        renderTelemetryTable();
     } else {
         applyDateFilter();
     }
@@ -624,9 +742,9 @@ function calculateStatistics(values) {
     ) / values.length;
 
     return {
-        min: min.toFixed(2),
-        max: max.toFixed(2),
-        avg: avg.toFixed(2)
+        min: min.toFixed(1),
+        max: max.toFixed(1),
+        avg: avg.toFixed(1)
     };
 }
 
