@@ -119,6 +119,21 @@ Testing covers:
 | **TC-HEALTH-03** | Diagnostic Self-Check Automation | Execute `HealthDiagnosticRunner.run_self_check()` | Verifies service online, Z-Score configured, and backend connectivity | Returns `healthy: True` |
 | **TC-DOCKER-01** | Multi-Container Orchestration | Execute `docker-compose up --build` | TimescaleDB, Backend, Simulator, Analytics start and pass healthchecks | All services healthy (`exit 0`) |
 
+### 3.5 Security, Authentication & Communication Encryption Tests
+| Test Case ID | Test Title | Test Procedure | Expected Result | Pass/Fail Criteria |
+| :--- | :--- | :--- | :--- | :--- |
+| **TC-SEC-01** | Missing API Token Ingestion | Send `POST /api/telemetry` without Authorization header | HTTP 401 Unauthorized | Status 401 & error message |
+| **TC-SEC-02** | Invalid API Token Ingestion | Send `POST /api/telemetry` with invalid token | HTTP 401 Unauthorized | Status 401 & invalid token error |
+| **TC-SEC-03** | API Rate Limiting Threshold | Send > 100 requests in 15-minute window | HTTP 429 Too Many Requests | Status 429 returned after limit |
+| **TC-JWT-01..02** | Valid JWT Token Access | Send `GET /api/telemetry` with valid Bearer JWT token | HTTP 200 OK with requested dataset | Status 200 & valid payload |
+| **TC-JWT-03..06** | Invalid / Malformed / Expired JWT | Send `GET /api/telemetry` with expired or tampered JWT | HTTP 401 Unauthorized | Status 401 & error message |
+| **TC-JWT-07** | Server Misconfiguration Handling | Omit `JWT_SECRET` in environment variables | HTTP 503 Service Unavailable | Status 503 returned gracefully |
+| **TC-JWT-08..09** | Public Ingestion & Health Routes | Send `POST /api/telemetry` and `GET /api/health` without JWT | Requests succeed (protected by API Token / unauthenticated) | Permitted per architecture |
+| **TC-JWT-10** | Disallowed Algorithm Rejection | Send JWT signed with `"none"` algorithm | HTTP 401 Unauthorized | Disallowed algorithm rejected |
+| **TC-TLS-01..04** | HTTPS / TLS Header Inspection | Inspect `X-Forwarded-Proto`, HSTS, and defense-in-depth headers | HSTS and frame/MIME security headers present on HTTPS | Headers match standard |
+| **TC-TLS-05..06** | Telemetry Ingestion over TLS | Send telemetry payload over simulated TLS connection | Valid token accepted; unauthenticated rejected | Proper enforcement |
+| **TC-TLS-07..09** | Insecure Redirection & Key Safety | Test HTTP to HTTPS redirection and inspect error payloads | Cleartext redirected; zero private key leaks | Confidentiality intact |
+
 ---
 
 ## 4. Test Environment & Environment Variables
@@ -126,8 +141,8 @@ Testing covers:
 ### 4.1 Test Environment Setup
 - **OS:** Linux (Ubuntu 22.04 LTS) / macOS 14+ / Windows 11 with WSL2.
 - **Docker Version:** Docker Engine 24.0+, Docker Compose v2.20+.
-- **Node.js:** Node 20+ LTS / Node 22.
-- **Python:** Python 3.10+ / Python 3.11+.
+- **Node.js:** Node.js 22 LTS (Active Runtime: v22+).
+- **Python:** Python 3.11+ (Active Runtime: v3.11 - v3.13).
 
 ### 4.2 Entry & Exit Criteria
 - **Entry Criteria:** Clean git working tree; database migrations applied; all microservice dependencies installed (`npm ci`, `pip install -r requirements.txt`).
@@ -135,7 +150,7 @@ Testing covers:
 
 ---
 
-## 5. Traceability Matrix & Execution Status (Sprint 1 & Sprint 2)
+## 5. Traceability Matrix & Execution Status (Sprint 1, Sprint 2 & Deliverables Part-3)
 
 | Requirement ID | Test Case ID | Test Level | Automated Suite | Execution Status |
 | :--- | :--- | :--- | :--- | :---: |
@@ -146,13 +161,17 @@ Testing covers:
 | `IOT-FR-005` | **TC-DB-02..04** | Integration | `database/tests/test_aggregates.py` | ✅ **PASS** |
 | `IOT-FR-006` | **TC-DB-05** | Integration | `database/tests/test_aggregates.py` | ✅ **PASS** |
 | `IOT-FR-007` | **TC-WS-01..02** | Integration | `backend/tests/telemetry.test.js` | ✅ **PASS** |
-| `IOT-FR-008` | **TC-UI-01`** | Acceptance | `frontend/app.js` (Manual + WebSocket) | ✅ **PASS** |
-| `IOT-FR-009` | **TC-UI-02`** | Acceptance | `frontend/app.js` (Manual + WebSocket) | ✅ **PASS** |
-| `IOT-FR-010` | **TC-UI-03`** | Acceptance | `frontend/app.js` (Date Range Filter) | ✅ **PASS** |
-| `IOT-FR-011` | **TC-UI-04`** | Acceptance | `frontend/app.js` (CSV/JSON Export) | ✅ **PASS** |
+| `IOT-FR-008` | **TC-UI-01** | Acceptance | `frontend/app.js` (Manual + WebSocket) | ✅ **PASS** |
+| `IOT-FR-009` | **TC-UI-02** | Acceptance | `frontend/app.js` (Manual + WebSocket) | ✅ **PASS** |
+| `IOT-FR-010` | **TC-UI-03** | Acceptance | `frontend/app.js` (Date Range Filter) | ✅ **PASS** |
+| `IOT-FR-011` | **TC-UI-04** | Acceptance | `frontend/app.js` (CSV/JSON Export) | ✅ **PASS** |
 | `IOT-FR-012` | **TC-ANOM-01..03** | Unit | `analytics_alerting/tests/test_anomaly_detector.py` | ✅ **PASS** |
 | `IOT-FR-013` | **TC-ANOM-04..06** | Unit | `analytics_alerting/tests/test_anomaly_detector.py` | ✅ **PASS** |
-| `IOT-FR-014` | **TC-ALERT-01`** | Unit | `analytics_alerting/tests/test_notification_worker.py` | ✅ **PASS** |
-| `IOT-FR-015` | **TC-ALERT-02`** | Unit | `analytics_alerting/tests/test_notification_worker.py` | ✅ **PASS** |
+| `IOT-FR-014` | **TC-ALERT-01** | Unit | `analytics_alerting/tests/test_notification_worker.py` | ✅ **PASS** |
+| `IOT-FR-015` | **TC-ALERT-02** | Unit | `analytics_alerting/tests/test_notification_worker.py` | ✅ **PASS** |
 | `IOT-FR-016` | **TC-HEALTH-01..03**| Integration | `backend/tests/telemetry.test.js` & `analytics_alerting/tests/test_health.py` | ✅ **PASS** |
 | `IOT-NFR-001` | **TC-DOCKER-01** | System | `docker-compose.yml` Health Checks | ✅ **PASS** |
+| `IOT-NFR-002` | **TC-UI-05** | Acceptance | `frontend/app.js` (WebSocket Auto-Reconnect) | ✅ **PASS** |
+| `IOT-NFR-020` | **TC-TLS-01..09** | Integration | `backend/tests/tls.test.js` | ✅ **PASS** |
+| `IOT-NFR-021` | **TC-JWT-01..12** | Unit / Int | `backend/tests/telemetry.test.js` | ✅ **PASS** |
+| `IOT-NFR-022` | **TC-SEC-01..03** | Integration | `backend/tests/telemetry.test.js` | ✅ **PASS** |

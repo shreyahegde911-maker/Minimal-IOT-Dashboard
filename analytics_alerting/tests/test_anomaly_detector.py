@@ -89,3 +89,28 @@ def test_isolation_forest_online_telemetry_evaluation():
     assert outlier_res["is_anomaly"] is True
     assert outlier_res["score"] < 0.0
 
+
+def test_temperature_freezing_threshold_breach():
+    detector = ZScoreAnomalyDetector()
+    res = detector.evaluate_reading("sensor-freeze", "temperature", -15.0)
+    assert res["is_anomaly"] is True
+    assert "below low limit" in res["reason"]
+
+
+def test_humidity_high_and_low_threshold_breaches():
+    detector = ZScoreAnomalyDetector()
+    high_res = detector.evaluate_reading("sensor-hum-hi", "humidity", 95.0)
+    assert high_res["is_anomaly"] is True
+    assert "exceeded high limit" in high_res["reason"]
+
+    low_res = detector.evaluate_reading("sensor-hum-lo", "humidity", 5.0)
+    assert low_res["is_anomaly"] is True
+    assert "below low limit" in low_res["reason"]
+
+
+def test_unfitted_isolation_forest_returns_normal():
+    detector = IsolationForestDetector()
+    pred = detector.predict_anomaly([22.0, 50.0, 0.0, 0.0])
+    assert pred["is_anomaly"] is False
+    assert pred["score"] == 0.0
+

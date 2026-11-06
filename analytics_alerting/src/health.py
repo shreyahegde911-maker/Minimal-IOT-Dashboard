@@ -66,10 +66,14 @@ class HealthDiagnosticRunner:
         }
 
 
-if __name__ == "__main__":
+def main():
     import json
     zscore = ZScoreAnomalyDetector()
     ml = IsolationForestDetector()
     runner = HealthDiagnosticRunner(zscore, ml)
     print(json.dumps(runner.run_self_check(), indent=2))
+
+
+if __name__ == "__main__":
+    main()
 

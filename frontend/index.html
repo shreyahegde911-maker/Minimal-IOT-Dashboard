@@ -225,6 +225,22 @@
             </div>
 
             <p id="filter-message" class="filter-message" role="status" aria-live="polite"></p>
+            <div class="table-controls">
+                <span id="log-count-info">Showing latest 6 logs</span>
+                <div class="table-actions">
+                    <label for="log-limit-select">Show:</label>
+                    <select id="log-limit-select">
+                        <option value="6" selected>6 logs</option>
+                        <option value="12">12 logs</option>
+                        <option value="25">25 logs</option>
+                        <option value="50">50 logs</option>
+                        <option value="all">All logs</option>
+                    </select>
+                    <button id="toggle-expand-logs">Expand All</button>
+                </div>
+            </div>
+
+            <div class="table-container">
 
             <!-- HISTORICAL TABLE -->
             <div class="table-container">
@@ -284,6 +300,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Socket.IO Client -->
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    if (typeof io === "undefined") {
+        document.write('<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"><\/script>');
+    }
+</script>
 
 <script>
     // Use the current hostname for a backend running on port 3000.
