@@ -349,6 +349,45 @@ describe("Telemetry API Tests", () => {
         expect(response.body.success).toBe(false);
     });
 
+    // TC-SEC-04: Reject telemetry ingestion without authentication
+    test("TC-SEC-04: should reject POST requests without an API token", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .send({
+                sensorId: "UNAUTH-001",
+                temperature: 25,
+                humidity: 50
+            });
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
+    // TC-SEC-05: Reject telemetry ingestion with an invalid token
+    test("TC-SEC-05: should reject POST requests with an invalid API token", async () => {
+        const response = await request(app)
+            .post("/api/telemetry")
+            .set("Authorization", "Bearer wrong-token")
+            .send({
+                sensorId: "UNAUTH-002",
+                temperature: 25,
+                humidity: 50
+            });
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
+    // TC-SEC-06: Reject malformed authorization headers
+    test("TC-SEC-06: should reject malformed authorization headers", async () => {
+        const response = await request(app)
+            .get("/api/telemetry")
+            .set("Authorization", "Basic invalid-token");
+
+        expect(response.statusCode).toBe(401);
+        expect(response.body.success).toBe(false);
+    });
+
     // TC-SEC-03: Rate limiting
     test("TC-SEC-03: should reject requests after exceeding the rate limit", async () => {
         let response;
