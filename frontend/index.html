@@ -300,22 +300,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Socket.IO Client -->
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    if (typeof io === "undefined") {
-        document.write('<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"><\/script>');
-    }
-</script>
 
+<!-- Backend Configuration and Socket.IO Client -->
 <script>
-    // Use the current hostname for a backend running on port 3000.
-    // Set window.BACKEND_URL before this script if the backend is hosted elsewhere.
     window.BACKEND_URL = window.BACKEND_URL ||
         `${window.location.protocol}//${window.location.hostname}:3000`;
 
     const socketIoScript = document.createElement("script");
-    socketIoScript.src = `${window.BACKEND_URL}/socket.io/socket.io.js`;
+    socketIoScript.src =
+        `${window.BACKEND_URL}/socket.io/socket.io.js`;
 
     socketIoScript.onload = () => {
         const appScript = document.createElement("script");
@@ -324,9 +317,15 @@
     };
 
     socketIoScript.onerror = () => {
-        console.error("Could not load the Socket.IO client from:", socketIoScript.src);
+        console.error(
+            "Could not load Socket.IO client from:",
+            socketIoScript.src
+        );
+
         const status = document.getElementById("connection-status");
-        status.textContent = "● Backend script unavailable";
+        if (status) {
+            status.textContent = "Backend unavailable";
+        }
     };
 
     document.body.appendChild(socketIoScript);
