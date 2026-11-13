@@ -394,8 +394,7 @@ describe("Telemetry API Tests", () => {
 
         for (let i = 0; i < 110; i++) {
             response = await request(app)
-                .get("/api/telemetry")
-                .set("Authorization", `Bearer ${validToken}`);
+                .get("/api/telemetry");
 
             if (response.statusCode === 429) {
                 break;
@@ -404,7 +403,7 @@ describe("Telemetry API Tests", () => {
 
         expect(response.statusCode).toBe(429);
         expect(response.body.success).toBe(false);
-    }, 30000);
+    }, 15000);
 });
 
 describe("JWT Authentication Tests (IOT-NFR-021)", () => {

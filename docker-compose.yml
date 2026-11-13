@@ -83,9 +83,38 @@ services:
       - ROLLING_WINDOW_SIZE=60
       - TEMP_HIGH_THRESHOLD=35.0
       - ALERT_COOLDOWN_SECONDS=60
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-${SMTP_PASS}}
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-${ALERT_RECIPIENT_EMAIL}}
     restart: always
     healthcheck:
       test: ["CMD", "python", "-m", "analytics_alerting.src.health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Nginx Reverse Proxy with TLS 1.2+ Termination (Member 4 - IOT-NFR-020)
+  nginx:
+    image: nginx:alpine
+    container_name: miniot-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider --no-check-certificate https://localhost/api/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
