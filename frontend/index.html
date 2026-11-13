@@ -300,11 +300,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- Socket.IO Client -->
-<script src="http://127.0.0.1:3000/socket.io/socket.io.js"></script>
 
-<!-- Dashboard Application -->
-<script src="app.js"></script>
+<!-- Backend Configuration and Socket.IO Client -->
+<script>
+    window.BACKEND_URL = window.BACKEND_URL ||
+        `${window.location.protocol}//${window.location.hostname}:3000`;
+
+    const socketIoScript = document.createElement("script");
+    socketIoScript.src =
+        `${window.BACKEND_URL}/socket.io/socket.io.js`;
+
+    socketIoScript.onload = () => {
+        const appScript = document.createElement("script");
+        appScript.src = "app.js";
+        document.body.appendChild(appScript);
+    };
+
+    socketIoScript.onerror = () => {
+        console.error(
+            "Could not load Socket.IO client from:",
+            socketIoScript.src
+        );
+
+        const status = document.getElementById("connection-status");
+        if (status) {
+            status.textContent = "Backend unavailable";
+        }
+    };
+
+    document.body.appendChild(socketIoScript);
+</script>
 
 <script>
     const navLinks = document.querySelectorAll(".nav-link");
