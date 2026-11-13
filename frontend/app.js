@@ -920,7 +920,6 @@ socket.on("init_history", (records) => {
     });
 
     renderDeviceCards();
-    renderDeviceStatistics();
     refreshHistoricalSection();
 });
 
@@ -987,15 +986,7 @@ socket.on("telemetry", (data) => {
         telemetryHistory.pop();
     }
 
-    // Update per-device statistics.
-    // Update the historical table.
-    if (filteredHistory === null) {
-        renderTelemetryTable();
-    } else {
-        applyDateFilter();
-    }
-
-    // Update statistics once for every new reading.
+    // Update per-device statistics once for every new reading.
     updateDeviceStatistics(record);
 
     // Update historical data and selected date filter.
