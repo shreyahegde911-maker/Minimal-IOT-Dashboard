@@ -743,7 +743,7 @@ function updateHistoricalChart(records) {
 // HISTORICAL TABLE
 // ==========================================
 
-function renderTelemetryTable(records) {
+function renderTelemetryTable(records = filteredHistory !== null ? filteredHistory : telemetryHistory) {
     telemetryTableBody.replaceChildren();
 
     if (records.length === 0) {
@@ -863,43 +863,54 @@ function clearDateFilter() {
 // RECEIVE TELEMETRY
 // ==========================================
 
-socket.on("telemetry", data => {
+// Receive historical telemetry when connected.
 socket.on("init_history", (records) => {
     if (!Array.isArray(records) || records.length === 0) return;
 
-    // Sort chronological for chart lines
+    // Sort chronologically for chart lines.
     const chronological = [...records].reverse();
+
     chronological.forEach((r) => {
         const sId = r.sensorId || r.device_id;
         const time = r.timestamp || r.time || new Date().toISOString();
+
         if (sId && r.temperature !== undefined) {
             updateDeviceChart(temperatureChart, sId, r.temperature, time);
         }
+
         if (sId && r.humidity !== undefined) {
             updateDeviceChart(humidityChart, sId, r.humidity, time);
         }
     });
 
-    // Store in history (newest first)
-    telemetryHistory = records.map((r) => ({
-        timestamp: r.timestamp || r.time,
-        sensorId: r.sensorId || r.device_id,
-        temperature: r.temperature,
-        humidity: r.humidity
-    }));
+    // Store historical records.
+    telemetryHistory.splice(
+        0,
+        telemetryHistory.length,
+        ...records.map((r) => ({
+            timestamp: r.timestamp || r.time,
+            sensorId: r.sensorId || r.device_id,
+            temperature: r.temperature,
+            humidity: r.humidity
+        }))
+    );
 
-    // Update latest card values
+    // Update latest device readings.
     const seen = new Set();
+
     records.forEach((r) => {
         const sId = r.sensorId || r.device_id;
+
         if (!seen.has(sId)) {
             seen.add(sId);
+
             deviceReadings.set(sId, {
                 temperature: r.temperature,
                 humidity: r.humidity,
                 online: true,
                 lastSeen: Date.now()
             });
+
             updateDeviceStatistics({
                 sensorId: sId,
                 temperature: r.temperature,
@@ -910,9 +921,10 @@ socket.on("init_history", (records) => {
 
     renderDeviceCards();
     renderDeviceStatistics();
-    renderTelemetryTable();
+    refreshHistoricalSection();
 });
 
+// Receive new live telemetry.
 socket.on("telemetry", (data) => {
     console.log("Telemetry received:", data);
 
