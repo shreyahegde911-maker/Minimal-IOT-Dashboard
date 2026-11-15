@@ -30,6 +30,7 @@ app.use(express.static(path.join(__dirname, "../frontend")));
 
 // Import routes
 const telemetryRoutes = require("./routes/telemetry");
+const rulesRoutes = require("./routes/rules");
 const { apiLimiter } = require("./middleware/rateLimiter");
 
 // Import WebSocket
@@ -61,6 +62,9 @@ app.get("/api/health", (req, res) => {
 
 // Telemetry API with rate limiting
 app.use("/api/telemetry", apiLimiter, telemetryRoutes);
+
+// Dynamic Rules Engine & Alert Management API with rate limiting (SAD §4.2, IOT-NFR-021)
+app.use("/api/rules", apiLimiter, rulesRoutes);
 
 // Start server
 if (require.main === module) {

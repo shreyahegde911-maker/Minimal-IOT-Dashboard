@@ -1,4 +1,3 @@
-
 const {
     validateTelemetry,
     createTelemetryRecord,
@@ -8,10 +7,13 @@ const {
 } = require("../services/ingestionService");
 
 const {
-    broadcastTelemetry
+    broadcastTelemetry,
+    broadcastRuleAlert
 } = require("../websocket/socket");
 
-// Receive and persist telemetry
+const ruleEngine = require("../services/ruleEngineService");
+
+// Receive, persist, evaluate rules and broadcast telemetry
 async function receiveTelemetry(req, res) {
     const { sensorId, temperature, humidity } = req.body;
 
@@ -43,10 +45,17 @@ async function receiveTelemetry(req, res) {
         // Broadcast only after successful database insertion
         broadcastTelemetry(savedTelemetry);
 
+        // Evaluate dynamic threshold rules against incoming telemetry
+        const triggeredAlerts = ruleEngine.evaluateTelemetry(savedTelemetry);
+        for (const alert of triggeredAlerts) {
+            broadcastRuleAlert(alert);
+        }
+
         return res.status(201).json({
             success: true,
             message: "Telemetry received successfully",
-            data: savedTelemetry
+            data: savedTelemetry,
+            alerts: triggeredAlerts
         });
     } catch (error) {
         console.error("Failed to store telemetry:", error.message);
