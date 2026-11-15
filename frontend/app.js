@@ -90,7 +90,7 @@ const humidityChart = new Chart(humidityCtx, {
 // WebSocket Connection
 // =========================
 
-const socket = io("http://localhost:3000", {
+const socket = io({
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
@@ -377,7 +377,7 @@ exportJsonButton.addEventListener("click", exportJson);
 socket.on("connect", () => {
     console.log("Connected to backend");
 
-    connectionStatus.textContent = "● Connected";
+    connectionStatus.textContent = "Connected";
     connectionStatus.classList.remove("disconnected");
     connectionStatus.classList.add("connected");
 });
@@ -389,7 +389,7 @@ socket.on("connect", () => {
 socket.on("disconnect", () => {
     console.log("Disconnected from backend");
 
-    connectionStatus.textContent = "● Disconnected";
+    connectionStatus.textContent = "Disconnected";
     connectionStatus.classList.remove("connected");
     connectionStatus.classList.add("disconnected");
 });

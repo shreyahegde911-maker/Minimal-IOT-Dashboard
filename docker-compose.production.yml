@@ -1,0 +1,97 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:2.28.3-pg15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      POSTGRES_DB: miniot
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d miniot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Intentionally no public database port.
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      PORT: "3000"
+      NODE_ENV: production
+      DB_HOST: timescaledb
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      DB_NAME: miniot
+      API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-120}
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  simulator:
+    build:
+      context: .
+      dockerfile: simulator/Dockerfile
+    environment:
+      BACKEND_INGEST_URL: http://backend:3000/api/telemetry
+      SIMULATION_INTERVAL_SEC: ${SIMULATION_INTERVAL_SEC:-3}
+      API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  analytics-alerting:
+    build:
+      context: .
+      dockerfile: analytics_alerting/Dockerfile
+    environment:
+      BACKEND_URL: http://backend:3000
+      Z_SCORE_THRESHOLD: ${Z_SCORE_THRESHOLD:-3.0}
+      ROLLING_WINDOW_SIZE: ${ROLLING_WINDOW_SIZE:-60}
+      TEMP_HIGH_THRESHOLD: ${TEMP_HIGH_THRESHOLD:-35.0}
+      ALERT_COOLDOWN_SECONDS: ${ALERT_COOLDOWN_SECONDS:-60}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "${DASHBOARD_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: miniot-production-network
+
+volumes:
+  timescale_data:
