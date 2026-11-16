@@ -122,7 +122,16 @@ This Software Architecture & Design (SAD) specification describes the high-level
 | **Tampering** | Man-in-the-middle tampering of sensor payload values in transit | Enforce TLS 1.2+ (HTTPS/WSS) on all incoming and outgoing connections |
 | **Information Disclosure**| Unauthenticated user accessing confidential historical telemetry | JWT authorization for REST API routes; CORS policy configuration |
 | **Denial of Service (DoS)** | Attacker flooding backend ingestion API with fake messages | Nginx reverse proxy rate-limiting (e.g. 30 requests/sec per IP) |
-| **Elevation of Privilege**| Unauthorized user accessing administrative rule-engine controls | Role-Based Access Control (RBAC) separating viewer vs admin tokens |
+| **Elevation of Privilege**| Unauthorized user accessing administrative rule-engine controls | Role-Based Access Control (RBAC) separating viewer vs admin tokens 
+
+### 5.1 Authentication and Authorisation
+
+The system uses JWT-based authentication to verify user identity through Bearer tokens. After successful authentication, the user's role is extracted from the verified token.
+
+- **Admin:** Can view, create, update, enable, disable, and delete dynamic rules.
+- **Viewer:** Can view existing rules and recent alerts but cannot modify or delete rules.
+
+The `authenticateJWT` middleware verifies tokens, while `requireRole` and `requireAdmin` enforce role-specific permissions.
 
 ---
 
