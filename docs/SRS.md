@@ -21,7 +21,9 @@ The system encompasses:
 - **Telemetry Ingestion & Simulation:** Dynamic generation and API/WebSocket ingestion of simulated temperature (°C) and humidity (%) telemetry.
 - **Data Persistence & Rollups:** Time-series storage (TimescaleDB / PostgreSQL / MongoDB) with continuous aggregation pipelines (1-min, 1-hr, 1-day rollups) and data retention pruning.
 - **Real-Time Visualization:** Responsive dashboard with live interactive charts, device status cards, and historical log viewers with CSV/JSON exports.
-- **Analytics & Alerting:** Statistical (Z-Score) and Machine Learning (Isolation Forest) anomaly detection coupled with multi-channel alert workers (Webhooks, Discord, Telegram, Email).
+- **Analytics & Alerting:** Statistical (Z-Score) and Machine Learning (Isolation Forest) anomaly detection, dynamic threshold-based rule evaluation, and alert notifications through configured Discord and Slack channels.
+- **Dynamic Rule Management:** Allows authorised administrators to create, view, update, enable, disable, and delete alert rules.
+- **Role-Based Access Control (RBAC):** Controls access to system operations based on Admin and Viewer roles.
 - **Containerized DevOps:** Production-ready multi-container orchestration using Docker Compose and GitHub Actions CI/CD.
 
 ### 1.3 Intended Audience
@@ -78,7 +80,9 @@ The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
 - **IOT-FR-020:** The backend **shall** expose REST API endpoints for fetching device registries, latest telemetry, historical log queries, and system health status.
 - **IOT-FR-021:** The backend **shall** provide a WebSocket / SSE endpoint to broadcast live sensor readings to connected clients.
 - **IOT-FR-022:** The backend **shall** enforce API rate limiting and token-based route protection.
-
+- **IOT-FR-023:** The backend shall provide dynamic rule management functionality, allowing authorised administrators to create, view, update, enable, disable, and delete threshold-based alert rules. Authorised users shall also be able to view existing rules and recent rule alerts.
+- **IOT-FR-024:** The system shall implement Role-Based Access Control (RBAC) using Admin and Viewer roles. Admin users shall have permission to manage dynamic rules, while Viewer users shall have read-only access to rules and rule alerts.
+  
 ### 4.4 Real-Time Visualization & Dashboard UI (Member 1)
 - **IOT-FR-030:** The client **shall** render interactive live charts (Chart.js / ECharts / uPlot) that dynamically update upon receiving new WebSocket readings without full-page reloads.
 - **IOT-FR-031:** The client **shall** display real-time status cards showing online/offline status, min/max/avg stats, and live telemetry gauges per device.
@@ -128,7 +132,8 @@ The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
 | **IOT-FR-042** | Notification Dispatcher | Member 4 | `analytics/alerting` | `TC-ALERT-01` |
 | **IOT-NFR-001** | Sub-200ms Latency | Member 1 & 2 | `backend` + `frontend` | `TC-PERF-01` |
 | **IOT-NFR-020** | TLS & Token Security | Member 2 & 4 | `devops/nginx` | `TC-SEC-01` |
-
+| **IOT-FR-023** | Dynamic Rule Management | Member 2 | `backend/routes/rules.js`, `backend/controllers/ruleController.js` | `TC-RULE-01` |
+| **IOT-FR-024** | Role-Based Access Control | Member 2 | `backend/middleware/jwtAuth.js`, `backend/middleware/roleAuth.js` | `TC-SEC-02` |
 ---
 
 ## 7. UML Use-Case Diagram
