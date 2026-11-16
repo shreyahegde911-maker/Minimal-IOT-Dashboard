@@ -21,7 +21,6 @@ The system encompasses:
 - **Telemetry Ingestion & Simulation:** Dynamic generation and API/WebSocket ingestion of simulated temperature (°C) and humidity (%) telemetry.
 - **Data Persistence & Rollups:** Time-series storage (TimescaleDB / PostgreSQL / MongoDB) with continuous aggregation pipelines (1-min, 1-hr, 1-day rollups) and data retention pruning.
 - **Real-Time Visualization:** Responsive dashboard with live interactive charts, device status cards, and historical log viewers with CSV/JSON exports.
-- **Analytics & Alerting:** Statistical (Z-Score) and Machine Learning (Isolation Forest) anomaly detection, dynamic threshold-based rule evaluation, and alert notifications through configured Discord and Slack channels.
 - **Dynamic Rule Management:** Allows authorised administrators to create, view, update, enable, disable, and delete alert rules.
 - **Role-Based Access Control (RBAC):** Controls access to system operations based on Admin and Viewer roles.
 - **Containerized DevOps:** Production-ready multi-container orchestration using Docker Compose and GitHub Actions CI/CD.
@@ -45,15 +44,22 @@ This document is intended for project team members, software engineers, DevOps l
 ## 3. Overall System Description
 
 ### 3.1 Product Perspective
-The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
+
+The Minimal IoT Dashboard follows a **Client–Server Architecture** at the application level, supported by a containerized multi-service environment.
+
+The frontend acts as the client, providing the user interface for displaying live sensor readings, charts and historical data. The Node.js and Express backend acts as the server, handling API requests, validating incoming telemetry, storing readings and broadcasting real-time updates through Socket.IO.
+
+Supporting services, including the telemetry simulator, TimescaleDB database, analytics and anomaly detection engine, notification worker and Nginx reverse proxy, operate as separate components managed through Docker Compose.
+
+This separation allows the system to support real-time communication, modular development, easier maintenance and future expansion.
 ```
 [ Telemetry Simulator ] ---> [ Backend Ingestion API / WS ] ---> [ TimescaleDB / Postgres ]
                                       |                                   |
                                       v                                   v
                              [ WebSocket Broadcast ]            [ Analytics & Anomaly Engine ]
-                                      |                                   |
-                                      v                                   v
-                             [ Frontend Live UI ]               [ Notification Worker (Discord/Email) ]
+                                      |                                   
+                                      v                                   
+                             [ Frontend Live UI ]               
 ```
 
 ### 3.2 Operating Environment
