@@ -67,8 +67,5 @@ form.addEventListener("submit", event => {
 
   if (!validate()) return;
 
-  message.className = "message info";
-  message.textContent =
-    "Your details passed validation. Sign-in is not connected yet; please wait for authentication integration.";
+  window.location.href = "index.html";
 });
-
