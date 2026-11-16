@@ -83,15 +83,6 @@ services:
       - ROLLING_WINDOW_SIZE=60
       - TEMP_HIGH_THRESHOLD=35.0
       - ALERT_COOLDOWN_SECONDS=60
-      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-${SMTP_PASS}}
-      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-${ALERT_RECIPIENT_EMAIL}}
     restart: always
     healthcheck:
       test: ["CMD", "python", "-m", "analytics_alerting.src.health"]

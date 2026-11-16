@@ -21,7 +21,7 @@ Testing covers:
 - Database time-series indexing, rollup aggregation accuracy, and data pruning.
 - Frontend interactive charts, telemetry cards, and CSV/JSON log exports.
 - Statistical (Z-Score) & Machine Learning (Isolation Forest) anomaly detection algorithms.
-- Multi-channel notification worker dispatching (Discord, Webhooks, Telegram, Email).
+- Throttled in-system anomaly alert logging.
 - Docker Compose container startup and health monitoring.
 
 ---
@@ -109,7 +109,7 @@ Testing covers:
 | **TC-ANOM-04** | Multivariate Rate-of-Change Extraction | Calculate feature vector `[temp, hum, delta_temp, delta_hum]` | Correct first-order difference computed relative to prior reading | Delta values match subtraction |
 | **TC-ANOM-05** | Isolation Forest Baseline Training | Fit Isolation Forest on 50 normal telemetry vectors | Model trains successfully and sets `is_fitted = True` | Readiness flag set to True |
 | **TC-ANOM-06** | Online Isolation Forest Scoring | Score anomalous vector `[45.0, 10.0, 15.0, -40.0]` | Model predicts negative anomaly score (`prediction == -1`) | Classified as Anomaly |
-| **TC-ALERT-01** | Webhook JSON Formatting | Format alert event for Discord and Slack webhooks | JSON embeds contain sensor ID, metric, value, Z-Score, and timestamp | Valid JSON schema with rich fields |
+| **TC-ALERT-01** | Anomaly Alert Logging | Trigger alert dispatch on anomaly event | Records structured alert and returns `True` | Alert logged cleanly |
 | **TC-ALERT-02** | Alert Cooldown Throttling | Fire 5 consecutive anomaly events within 10 seconds | Notification sent for 1st event; subsequent 4 throttled | Exactly 1 notification emitted |
 | **TC-SIM-01** | Multi-Sensor Diurnal Generation | Generate readings across `sensor-01`, `sensor-02`, `sensor-03` | Valid JSON payload with diurnal temperature and inverse humidity | Schema and bounds verified |
 | **TC-SIM-02** | High Temperature Spike Injection | Evaluate tick 25 on `sensor-01` | Injects 42.5°C anomaly spike | Temp == 42.5°C on tick 25 |

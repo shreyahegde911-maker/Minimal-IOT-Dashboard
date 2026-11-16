@@ -21,7 +21,7 @@ The system encompasses:
 - **Telemetry Ingestion & Simulation:** Dynamic generation and API/WebSocket ingestion of simulated temperature (°C) and humidity (%) telemetry.
 - **Data Persistence & Rollups:** Time-series storage (TimescaleDB / PostgreSQL / MongoDB) with continuous aggregation pipelines (1-min, 1-hr, 1-day rollups) and data retention pruning.
 - **Real-Time Visualization:** Responsive dashboard with live interactive charts, device status cards, and historical log viewers with CSV/JSON exports.
-- **Analytics & Alerting:** Statistical (Z-Score) and Machine Learning (Isolation Forest) anomaly detection, dynamic threshold-based rule evaluation, and alert notifications through configured Discord and Slack channels.
+- **Analytics & Alerting:** Statistical (Z-Score) and Machine Learning (Isolation Forest) anomaly detection, dynamic threshold-based rule evaluation, and throttled in-system anomaly alerting.
 - **Dynamic Rule Management:** Allows authorised administrators to create, view, update, enable, disable, and delete alert rules.
 - **Role-Based Access Control (RBAC):** Controls access to system operations based on Admin and Viewer roles.
 - **Containerized DevOps:** Production-ready multi-container orchestration using Docker Compose and GitHub Actions CI/CD.
@@ -53,7 +53,7 @@ The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
                              [ WebSocket Broadcast ]            [ Analytics & Anomaly Engine ]
                                       |                                   |
                                       v                                   v
-                             [ Frontend Live UI ]               [ Notification Worker (Discord/Email) ]
+                             [ Frontend Live UI ]               [ Anomaly Alert Worker (Throttled) ]
 ```
 
 ### 3.2 Operating Environment
@@ -92,7 +92,7 @@ The Minimal IoT Dashboard operates as a containerized microservice ecosystem:
 ### 4.5 Analytics, Anomaly Engine & Alerting (Member 4)
 - **IOT-FR-040:** The analytics service **shall** compute rolling Z-Scores on temperature/humidity streams to flag sudden spikes, drops, or sensor drift.
 - **IOT-FR-041:** The analytics service **shall** run an Isolation Forest machine learning model to evaluate multi-feature anomaly scores.
-- **IOT-FR-042:** The notification worker **shall** dispatch real-time alerts to configured external webhooks, Discord/Telegram channels, or Email when threshold breaches (e.g., Temp > 35°C for 3 consecutive readings) or anomalies occur.
+- **IOT-FR-042:** The anomaly alert worker **shall** record and log real-time anomaly alerts when threshold breaches (e.g., Temp > 35°C for 3 consecutive readings) or statistical/ML anomalies occur.
 - **IOT-FR-043:** The notification worker **shall** enforce alert throttling/cooldown logic to prevent notification flooding.
 
 ---

@@ -31,7 +31,7 @@ This Software Architecture & Design (SAD) specification describes the high-level
 | **Database & Storage** | TimescaleDB / PostgreSQL 15+ / MongoDB | Member 3 | Time-series schema, continuous aggregation views, automated retention downsampling |
 | **Simulator** | Python 3.10+ (NumPy / SciPy) | Member 3 | Diurnal temperature generator, humidity noise injection, multi-device telemetry stream |
 | **Analytics Engine** | Python 3.10+ (scikit-learn, Pandas) | Member 4 | Z-Score rolling stats, Isolation Forest anomaly scoring, drift detection |
-| **Alert Worker** | Python 3.10+ (Requests, aiohttp) | Member 4 | Multi-channel dispatching (Webhooks, Discord/Telegram, Email), alert throttling |
+| **Alert Worker** | Python 3.10+ | Member 4 | Structured anomaly alert logging, per-sensor alert throttling |
 | **DevOps & Orchestration** | Docker, Docker Compose, Nginx, GitHub Actions | Member 4 | Multi-container setup, reverse proxy, CI/CD pipeline, environment templates |
 
 ---
@@ -56,7 +56,7 @@ This Software Architecture & Design (SAD) specification describes the high-level
 |              | WSS Push                                    v                      |
 |              v                          +------------------+-------------------+  |
 |  +-----------+------------+             | Notification Dispatch Worker         |  |
-|  | Frontend Dashboard UI  |             | (Member 4 - Discord/Telegram/Email)  |  |
+|  | Frontend Dashboard UI  |             | (Member 4 - Throttled Alert Logger)  |  |
 |  | (Member 1)             |             +--------------------------------------+  |
 |  +------------------------+                                                       |
 +-----------------------------------------------------------------------------------+
@@ -110,7 +110,7 @@ This Software Architecture & Design (SAD) specification describes the high-level
   $$Z = \frac{X - \mu}{\sigma}$$
   Where $\mu$ is the 60-minute rolling mean and $\sigma$ is the rolling standard deviation per device. An anomaly is flagged if $|Z| > 3.0$.
 - **Isolation Forest Classifier:** Fits an unsupervised `IsolationForest` model on feature vector $[T, H, \frac{\Delta T}{\Delta t}, \frac{\Delta H}{\Delta t}]$ to detect multi-dimensional sensor calibration failures or environmental anomalies.
-- **Notification Worker Architecture:** Asynchronous worker listening for anomaly events, formatting markdown payload templates, and dispatching to configured webhooks/Discord bots.
+- **Alert Worker Architecture:** Asynchronous worker listening for anomaly events, enforcing per-sensor cooldown throttling, and logging structured anomaly alerts.
 
 ---
 
@@ -153,5 +153,5 @@ The `authenticateJWT` middleware verifies tokens, while `requireRole` and `requi
      |               |               |                 | & Isolation For.|                |
      |               |               |                 | [ANOMALY DETECTED]               |
      |               |               |                 |-- Dispatch Alert-------------->|
-     |               |               |                 |   (Discord/Webhook)             |
+     |               |               |                 |   (Throttled Anomaly Alert)     |
 ```
