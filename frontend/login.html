@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in | Minimal IoT Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="login.css"><script src="login.js" defer></script></head>
+<body><main class="layout">
+<section class="hero">
+<a class="brand" href="login.html"><span class="mark">⌁</span><span><b>Minimal <em>IoT</em></b><small>TEMP &amp; HUMIDITY</small></span></a>
+<div class="intro"><span class="eyebrow">● SMART MONITORING</span><h1>Every reading.<br><em>One clear view.</em></h1>
+<p>Monitor temperature, humidity and sensor activity from one simple dashboard.</p></div>
+<div class="preview"><div class="preview-head"><b>Sensor overview</b><small>● SYSTEM READY</small></div>
+<div class="metrics"><div><small>TEMPERATURE</small><strong>--.-°C</strong></div><div><small>HUMIDITY</small><strong>--%</strong></div></div>
+<div class="chart"></div><p>Sign in to access your monitoring workspace.</p></div>
+<footer>Minimal IoT Dashboard · Software Engineering Project</footer>
+</section>
+<section class="form-side"><div class="card">
+<div class="mobile-brand"><span class="mark">⌁</span><b>Minimal <em>IoT</em></b></div>
+<span class="kicker">WELCOME BACK</span><h2 id="heading">Sign in to your account</h2><p class="muted">Enter your account details to continue.</p>
+<form id="login-form" novalidate>
+<div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" placeholder="you@example.com" required aria-describedby="email-error"><small id="email-error" class="error"></small></div>
+<div class="field"><label for="password">Password</label><div class="password"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required aria-describedby="password-error"><button type="button" id="toggle-password" aria-pressed="false">Show</button></div><small id="password-error" class="error"></small></div>
+<div id="form-message" class="message" role="status" aria-live="polite"></div>
+<button class="submit" id="login-submit" type="submit"><span class="button-label">Sign in</span><span>→</span></button></form>
+<p class="security">◇ Your account access is managed securely.</p><p class="role-note">Admin and user permissions are managed by the authentication service.</p>
+</div></section></main></body></html>
