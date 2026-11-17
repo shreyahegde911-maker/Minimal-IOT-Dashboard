@@ -98,7 +98,7 @@ This separation allows the system to support real-time communication, modular de
 ### 4.5 Analytics, Anomaly Engine & Alerting (Member 4)
 - **IOT-FR-040:** The analytics service **shall** compute rolling Z-Scores on temperature/humidity streams to flag sudden spikes, drops, or sensor drift.
 - **IOT-FR-041:** The analytics service **shall** run an Isolation Forest machine learning model to evaluate multi-feature anomaly scores.
-- **IOT-FR-042:** The notification worker **shall** dispatch real-time alerts to configured external webhooks, Discord/Telegram channels, or Email when threshold breaches (e.g., Temp > 35°C for 3 consecutive readings) or anomalies occur.
+- **IOT-FR-042:** The anomaly alert worker **shall** record and log real-time anomaly alerts when threshold breaches (e.g., Temp > 35°C for 3 consecutive readings) or statistical/ML anomalies occur.
 - **IOT-FR-043:** The notification worker **shall** enforce alert throttling/cooldown logic to prevent notification flooding.
 
 ---

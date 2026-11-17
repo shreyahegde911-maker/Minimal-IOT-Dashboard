@@ -43,10 +43,6 @@ class HealthDiagnosticRunner:
                 "active_sensors_tracked": len(sensor_window_counts),
                 "sensor_window_metrics": sensor_window_counts,
                 "isolation_forest_trained": self.ml_detector.is_fitted
-            },
-            "channels": {
-                "discord_configured": bool(Config.DISCORD_WEBHOOK_URL),
-                "slack_configured": bool(Config.SLACK_WEBHOOK_URL)
             }
         }
 

@@ -31,7 +31,7 @@ def test_health_diagnostic_runner_config_keys():
 
     assert "backend_url" in health["config"]
     assert "z_score_threshold" in health["config"]
-    assert "discord_configured" in health["channels"]
+    assert "analytics_engine" in health
 
 
 def test_health_diagnostic_self_check():
