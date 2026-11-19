@@ -22,3 +22,4 @@ certs/*
 .coverage
 coverage/
 backend/coverage/
+simulator_env/
